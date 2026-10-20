@@ -87,7 +87,7 @@ const minorWords=/^(?:the|a|an|and|or|but|of|in|on|at|for|to|from|by|with|as|vs\
 const verbWords=/^(?:is|are|was|were|has|have|had|will|would|could|can|may|might|must|should|says?|said|faces?|backs?|rejects?|wins?|loses?|plans?|seeks?|calls?|finds?|warns?|urges?|moves?|takes?|gets?|makes?|opens?|closes?|rises?|falls?|grows?|drops?|hits?|leads?|leaves?|starts?|ends?|announces?|reveals?|returns?|questions?|fights?|pushes?|strikes?|votes?|approves?|blocks?|accuses?|offers?|promises?|threatens?|turns?|tries?|looks?|brings?|sets?|puts?|shifts?|changes?|shows?|reaches?|emerges?|sparks?|struggles?|continues?|prepares?|discusses?|weighs?|considers?|explains?|investigates?|discovers?|reconsiders?)$/i;
 function headlineMarkup(title){
  const original=String(title||'').trim();if(!original)return '';
- const words=original.split(/\s+/),clean=w=>w.replace(/^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}'’.-]+$/gu,'');
+ const words=original.split(/\s+/),clean=w=>w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}'’.-]+$/gu,'');
  const normalized=words.map(clean),lower=normalized.map(w=>w.toLowerCase());
  let start=-1,end=-1;
  // Prefer known multiword people, places and institutions, even after introductory clauses.
@@ -98,10 +98,10 @@ function headlineMarkup(title){
  if(leadIns.test(lower[0]||'')){const comma=words.findIndex((w,i)=>i<9&&/[,;:]$/.test(w));if(comma>=0&&comma<words.length-1)offset=comma+1;else if(/^(how|why|what|when|where|who|whether)$/i.test(lower[0]))offset=1}
  // Recognize a proper name only when it looks like a name, not generic headline title case.
  if(start<0){for(let i=offset;i<Math.min(words.length,11);i++){if(minorWords.test(lower[i])||verbWords.test(lower[i]))continue;
- const isCapitalized=/^\\p{Lu}/u.test(normalized[i]||'');
+ const isCapitalized=/^\p{Lu}/u.test(normalized[i]||'');
  const next=normalized[i+1]||'';
- const isName=isCapitalized&&(/^\\p{Lu}/u.test(next)&&!minorWords.test(next)&&!verbWords.test(next)||/^[A-Z]{2,}$/.test(normalized[i]));
- if(isName){start=i;end=i+1;while(end<words.length&&end-start<5&&/^\\p{Lu}/u.test(normalized[end])&&!verbWords.test(normalized[end]))end++;break}
+ const isName=isCapitalized&&(/^\p{Lu}/u.test(next)&&!minorWords.test(next)&&!verbWords.test(next)||/^[A-Z]{2,}$/.test(normalized[i]));
+ if(isName){start=i;end=i+1;while(end<words.length&&end-start<5&&/^\p{Lu}/u.test(normalized[end])&&!verbWords.test(normalized[end]))end++;break}
  }}
  // Otherwise highlight the first substantive noun phrase, ending before a likely verb.
  if(start<0){start=offset;while(start<words.length&&minorWords.test(lower[start]))start++;if(start>=words.length)start=0;end=Math.min(words.length,start+4);for(let i=start+1;i<end;i++){if(verbWords.test(normalized[i])||/[,:;!?]$/.test(words[i-1])){end=i;break}}if(end<=start)end=start+1}
