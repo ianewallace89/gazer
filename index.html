@@ -67,10 +67,10 @@ nav button{font-family:Modak,serif;font-weight:400;font-size:21px;line-height:1;
 #pull-indicator{position:fixed;top:0;left:50%;transform:translate(-50%,-110%);z-index:100;background:#004170;color:white;border:2px solid #111;border-radius:0 0 18px 18px;padding:11px 22px;font:18px Modak,serif;pointer-events:none;transition:transform .18s}#pull-indicator.visible{transform:translate(-50%,0)}#pull-indicator.loading{transform:translate(-50%,0)}
 .story,.story.featured{position:relative}
 .story .story-copy{padding-right:34px}
-.save-bookmark{position:absolute;right:12px;top:12px;z-index:2;width:27px;height:29px;display:flex;align-items:center;justify-content:center;padding:3px;border:2px solid #111;border-radius:3px;background:#fff;color:#111;cursor:pointer;box-shadow:2px 2px 0 #111}
+.save-bookmark{position:absolute;right:12px;top:12px;z-index:2;width:30px;height:32px;display:flex;align-items:center;justify-content:center;padding:4px;border:0;border-radius:0;background:transparent;color:#111;cursor:pointer;box-shadow:none}
 .save-bookmark svg{width:17px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
-.save-bookmark.is-saved{background:#004170;color:white}
-.save-bookmark.is-saved svg{fill:currentColor}
+.save-bookmark.is-saved{background:transparent;color:#111}
+.save-bookmark.is-saved svg{fill:#111}
 </style></head><body><div id="pull-indicator" role="status" aria-live="polite">↓ Pull to refresh</div><header><div class="brand">-30-</div><nav id="nav" aria-label="Sections"></nav></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
 const sections=['All','Saved','Top Stories','World','U.S.','Politics','New York','Business','Technology','Science','Health','Arts','Books','Movies','Opinion','The Guardian US','The Intercept','The Nation','Jacobin','ProPublica','In These Times'];
 let data={sections:{}};let selected='All';let savedArticles={};try{savedArticles=JSON.parse(localStorage.getItem('thirty-saved')||'{}')||{}}catch(e){savedArticles={}}const marks={'NYT':'NYT','The Guardian US':'G','The Intercept':'I','The Nation':'N','Jacobin':'J','ProPublica':'P','In These Times':'ITT'};
