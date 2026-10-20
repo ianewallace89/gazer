@@ -59,11 +59,11 @@ nav button{font-family:Modak,serif;font-weight:400;font-size:21px;line-height:1;
 
 /* Newsprint-style dot-matrix treatment for postage-stamp thumbnails. */
 .story .story-image{position:relative;overflow:hidden;background:#f5f4ef}
-.story .stamp,.story.featured .stamp{filter:grayscale(1) contrast(1.25) brightness(1.05)}
+.story .stamp,.story.featured .stamp{filter:grayscale(1) contrast(1.6) brightness(.96)}
 .story .story-image::after{content:"";position:absolute;inset:0;pointer-events:none;
  background:radial-gradient(circle,transparent 0 37%,#f5f4ef 46% 100%);
  background-size:3.4px 3.4px;background-position:center;
- opacity:.55;mix-blend-mode:normal}
+ opacity:.28;mix-blend-mode:normal}
 </style></head><body><header><div class="brand">-30-</div><nav id="nav" aria-label="Sections"></nav></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
 const sections=['All','Top Stories','World','U.S.','Politics','New York','Business','Technology','Science','Health','Arts','Books','Movies','Opinion','The Guardian US','The Intercept','The Nation','Jacobin','ProPublica','In These Times'];
 let data={sections:{}};let selected='All';const marks={'NYT':'NYT','The Guardian US':'G','The Intercept':'I','The Nation':'N','Jacobin':'J','ProPublica':'P','In These Times':'ITT'};
