@@ -29,12 +29,21 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
-      - name: Commit updated headline data
+      - name: Commit updated headline data (best effort)
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp headlines.json /tmp/gazer-headlines.json
+          git fetch origin main
+          git checkout -B main origin/main
+          cp /tmp/gazer-headlines.json headlines.json
           git add headlines.json
-          git diff --cached --quiet || (git commit -m "Refresh headlines" && git push)
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh headlines"
+            git push origin HEAD:main
+          fi
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
