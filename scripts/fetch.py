@@ -1,4 +1,4 @@
-import datetime, json, pathlib, urllib.request, xml.etree.ElementTree as ET, re, html
+import datetime, json, pathlib, urllib.request, urllib.parse, xml.etree.ElementTree as ET, re, html
 FEEDS = {
 "Top Stories":"HomePage","World":"World","U.S.":"US","Politics":"Politics","New York":"NYRegion",
 "Business":"Business","Technology":"Technology","Science":"Science","Health":"Health",
@@ -17,7 +17,18 @@ for section, slug in FEEDS.items():
             link=field("link")
             if not link.startswith("https://www.nytimes.com/"): continue
             summary=re.sub(r"<[^>]+>","",html.unescape(field("description")))
-            stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate")})
+            media_ns="{http://search.yahoo.com/mrss/}"
+            image=""
+            candidates=[]
+            for tag in ("content","thumbnail"):
+                for media in item.findall(media_ns+tag):
+                    url=media.get("url","")
+                    if url.startswith("https://") and ("nytimes.com" in urllib.parse.urlparse(url).hostname or ""):
+                        width=int(media.get("width","0") or 0)
+                        candidates.append((width,url))
+            if candidates:
+                image=max(candidates,key=lambda x:x[0])[1]
+            stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate"),"image":image})
         sections[section]=stories
         print(section,len(stories))
     except Exception as exc:
