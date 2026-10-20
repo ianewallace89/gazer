@@ -5,13 +5,15 @@ on:
     - cron: '*/15 * * * *'
   push:
     branches: [main]
+    paths-ignore:
+      - 'headlines.json'
 permissions:
   contents: write
   pages: write
   id-token: write
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
