@@ -24,7 +24,7 @@ jobs:
       - name: Prepare Pages files
         run: |
           mkdir -p public
-          cp index.html headlines.json public/
+          cp index.html headlines.json sw.js public/
           cp -R assets public/
           touch public/.nojekyll
       - uses: actions/upload-pages-artifact@v3
