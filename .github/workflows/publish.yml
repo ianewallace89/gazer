@@ -21,10 +21,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Fetch RSS headlines
         run: python3 scripts/fetch.py
+      - name: Extract public articles for offline reading
+        run: python3 scripts/extract.py
       - name: Prepare Pages files
         run: |
           mkdir -p public
-          cp index.html headlines.json sw.js public/
+          cp index.html headlines.json articles.json sw.js public/
           cp -R assets public/
           touch public/.nojekyll
       - uses: actions/upload-pages-artifact@v3
@@ -36,10 +38,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp headlines.json /tmp/gazer-headlines.json
+          cp articles.json /tmp/gazer-articles.json
           git fetch origin main
           git checkout -B main origin/main
           cp /tmp/gazer-headlines.json headlines.json
-          git add headlines.json
+          cp /tmp/gazer-articles.json articles.json
+          git add headlines.json articles.json
           if ! git diff --cached --quiet; then
             git commit -m "Refresh headlines"
             git push origin HEAD:main
