@@ -54,16 +54,16 @@ header .sub{display:none}
 nav button{font-family:Modak,serif;font-weight:400;font-size:21px;line-height:1;padding:9px 15px}
 .story h2,.story.featured h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(26px,5.8vw,35px);line-height:1.08}
 .story.featured h2{font-family:"Instrument Serif",Georgia,serif;font-weight:400;font-size:clamp(29px,6.5vw,39px);line-height:1.08}
-.headline-lead{font-family:"Rubik Bubbles",cursive;font-weight:400;font-size:.75em;letter-spacing:-.035em;line-height:1.2}
+.headline-lead{font-family:"Rubik Bubbles",cursive;font-weight:400;font-size:1em;letter-spacing:-.025em;line-height:1.12}
 .headline-rest{font-family:"Instrument Serif",Georgia,serif;font-weight:400}
 
 /* Newsprint-style dot-matrix treatment for postage-stamp thumbnails. */
 .story .story-image{position:relative;overflow:hidden;background:#f5f4ef}
-.story .stamp,.story.featured .stamp{filter:grayscale(1) contrast(1.65) brightness(1.12)}
+.story .stamp,.story.featured .stamp{filter:grayscale(1) contrast(1.25) brightness(1.05)}
 .story .story-image::after{content:"";position:absolute;inset:0;pointer-events:none;
  background:radial-gradient(circle,transparent 0 37%,#f5f4ef 46% 100%);
  background-size:3.4px 3.4px;background-position:center;
- opacity:.94;mix-blend-mode:normal}
+ opacity:.55;mix-blend-mode:normal}
 </style></head><body><header><div class="brand">-30-</div><nav id="nav" aria-label="Sections"></nav></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
 const sections=['All','Top Stories','World','U.S.','Politics','New York','Business','Technology','Science','Health','Arts','Books','Movies','Opinion','The Guardian US','The Intercept','The Nation','Jacobin','ProPublica','In These Times'];
 let data={sections:{}};let selected='All';const marks={'NYT':'NYT','The Guardian US':'G','The Intercept':'I','The Nation':'N','Jacobin':'J','ProPublica':'P','In These Times':'ITT'};
