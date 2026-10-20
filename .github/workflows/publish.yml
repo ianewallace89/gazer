@@ -1,0 +1,52 @@
+name: Refresh headlines and publish
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+  push:
+    branches: [main]
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch RSS headlines
+        run: python3 scripts/fetch.py
+      - name: Download fonts locally
+        run: |
+          mkdir -p fonts
+          curl -fLsS --retry 3 'https://fonts.gstatic.com/s/modak/v21/EJRYQgs1XtIEsnMH.ttf' -o fonts/Modak.ttf
+          curl -fLsS --retry 3 'https://fonts.gstatic.com/s/dynapuff/v9/z7N5dRvsZDIVHbYPMhZJ3HQ83UaSu4uhr7-ZFeoYkgAr1x8RSxYu6Yg.ttf' -o fonts/DynaPuff.ttf
+          curl -fLsS --retry 3 'https://fonts.gstatic.com/s/rubikbubbles/v3/JIA1UVdwbHFJtwA7Us1BPFbRNTE.ttf' -o fonts/RubikBubbles.ttf
+      - name: Prepare Pages files
+        run: |
+          mkdir -p public/fonts
+          cp index.html headlines.json public/
+          cp fonts/*.ttf public/fonts/
+          touch public/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - name: Commit updated headline data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add headlines.json
+          git diff --cached --quiet || (git commit -m "Refresh headlines" && git push)
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
