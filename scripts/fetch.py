@@ -9,7 +9,7 @@ EXTRA = {
 "The Guardian US":"https://www.theguardian.com/us/rss",
 "The Intercept":"https://theintercept.com/feed/?lang=en",
 "The Nation":"https://www.thenation.com/feed/",
-"Jacobin":"https://jacobinmag.com/feed/",
+"Jacobin":"https://jacobin.com/feed/",
 "ProPublica":"https://www.propublica.org/feeds/propublica/main",
 "In These Times":"https://inthesetimes.com/rss"
 }
@@ -49,11 +49,11 @@ for source,feed_url in EXTRA.items():
         with urllib.request.urlopen(req,timeout=25) as response: xml=response.read()
         root=ET.fromstring(xml)
         stories=[]
-        for item in root.findall("./channel/item")[:40]:
-            def field(name): return (item.findtext(name) or "").strip()
-            link=field("link")
+        for item in (root.findall("./channel/item") or root.findall("{http://www.w3.org/2005/Atom}entry"))[:40]:
+            def field(name): return (item.findtext(name) or item.findtext("{http://www.w3.org/2005/Atom}"+name) or "").strip()
+            link=field("link") or next((el.attrib.get("href","") for el in item.findall("{http://www.w3.org/2005/Atom}link") if el.attrib.get("rel","alternate")=="alternate"),"")
             if not link.startswith("https://"): continue
-            raw=html.unescape(field("description"))
+            raw=html.unescape(field("description") or field("summary") or field("content"))
             summary=re.sub(r"<[^>]+>"," ",raw)
             summary=re.sub(r"\\s+"," ",summary).strip()[:260]
             candidates=[]
@@ -69,7 +69,7 @@ for source,feed_url in EXTRA.items():
                 match=re.search(r"<img[^>]+src=[^>]*?(https://[^\\s\\\"'>]+)",raw,re.I)
                 if match: candidates.append((0,match.group(1)))
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
-            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate"),"image":image,"source":source})
+            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source})
         sections[source]=stories
         print(source,len(stories))
     except Exception as exc:
