@@ -66,7 +66,7 @@ for source,feed_url in EXTRA.items():
                     except ValueError: width=0
                     candidates.append((width,candidate))
             if not candidates:
-                match=re.search(r'<img[^>]+src=["\\'](https://[^"\\']+)',raw,re.I)
+                match=re.search(r"<img[^>]+src=[^>]*?(https://[^\\s\\\"'>]+)",raw,re.I)
                 if match: candidates.append((0,match.group(1)))
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
             stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate"),"image":image,"source":source})
