@@ -69,7 +69,8 @@ for source,feed_url in EXTRA.items():
                 match=re.search(r"<img[^>]+src=[^>]*?(https://[^\\s\\\"'>]+)",raw,re.I)
                 if match: candidates.append((0,match.group(1)))
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
-            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source})
+            tags=[(el.text or el.attrib.get("term","")).strip() for el in item if el.tag.rsplit("}",1)[-1]=="category"]
+            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"tags":tags})
         sections[source]=stories
         print(source,len(stories))
     except Exception as exc:
