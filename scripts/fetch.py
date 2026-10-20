@@ -8,7 +8,7 @@ headers={"User-Agent":"Mozilla/5.0 (compatible; GazerRSS/1.0)"}
 EXTRA = {
 "The Guardian US":"https://www.theguardian.com/us/rss",
 "The Intercept":"https://theintercept.com/feed/?lang=en",
-"The Nation":"https://www.thenation.com/feed/",
+"The Nation":"https://www.thenation.com/feed/?post_type=article",
 "Jacobin":"https://jacobin.com/feed/",
 "ProPublica":"https://www.propublica.org/feeds/propublica/main",
 "In These Times":"https://inthesetimes.com/rss"
