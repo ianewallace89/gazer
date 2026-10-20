@@ -79,10 +79,39 @@ const rules={
 function allArticles(){const seen=new Set();return Object.entries(data.sections).flatMap(([section,arr])=>(arr||[]).map(a=>({...a,_section:section}))).filter(a=>{if(!a.url||seen.has(a.url))return false;seen.add(a.url);return true})}
 function interleave(articles,limit=100){const buckets={};for(const a of articles.sort((a,b)=>Date.parse(b.date||0)-Date.parse(a.date||0))){(buckets[a.source||'NYT']??=[]).push(a)}const order=['NYT','The Guardian US','The Intercept','The Nation','Jacobin','ProPublica','In These Times'];const out=[];while(out.length<limit&&order.some(k=>buckets[k]?.length)){for(const k of order)if(buckets[k]?.length&&out.length<limit)out.push(buckets[k].shift())}return out}
 function matchesTopic(a,topic){if(topic==='Top Stories')return true;if(a.source==='NYT')return a._section===topic;const terms=[...(a.tags||[]),a.title||''].join(' ');return rules[topic]?.test(terms)||false}
-function headlineMarkup(title){const words=String(title||'').trim().split(/\s+/);if(!words.length)return '';let n=Math.min(3,words.length);const first=words[0]?.replace(/^[^\p{L}]+/u,'')||'';const skip=/^(the|a|an|how|why|what|when|where|is|are|will|can|as|in|on|at|for|to|of|after|before)$/i;
-if(skip.test(first)&&words.length>3)n=3;
-else if(words.length>3){n=2;for(let i=1;i<Math.min(4,words.length);i++){if(/^\p{Lu}/u.test(words[i])&&!/^(The|A|An|And|Of|In|On|For|To|With)$/i.test(words[i]))n=i+1;else break}n=Math.min(n,3)}
-return '<span class="headline-lead">'+safe(words.slice(0,n).join(' '))+'</span>'+(words.length>n?' <span class="headline-rest">'+safe(words.slice(n).join(' '))+'</span>':'')}
+const knownSubjects=[
+'New York City','New York Times','Supreme Court','White House','Federal Reserve','United Nations','Wall Street','European Union','Department of Justice','Justice Department','Trump Administration','Biden Administration','House Republicans','Senate Democrats','Donald Trump','Joe Biden','Kamala Harris','Vladimir Putin','Benjamin Netanyahu','Elon Musk','Xi Jinping','United States','New York','Los Angeles','Washington','Congress','Pentagon','NATO','OpenAI','Google','Apple','Amazon','Microsoft','Meta','TikTok','Netflix','Disney','Israel','Palestine','Gaza','Ukraine','Russia','China','Iran','Democrats','Republicans'
+];
+const leadIns=/^(?:how|why|what|when|where|who|whether|after|before|despite|amid|amidst|during|following|with|without|inside|behind|as|while|if|although|because|even as)\b/i;
+const minorWords=/^(?:the|a|an|and|or|but|of|in|on|at|for|to|from|by|with|as|vs\.?|versus)$/i;
+const verbWords=/^(?:is|are|was|were|has|have|had|will|would|could|can|may|might|must|should|says?|said|faces?|backs?|rejects?|wins?|loses?|plans?|seeks?|calls?|finds?|warns?|urges?|moves?|takes?|gets?|makes?|opens?|closes?|rises?|falls?|grows?|drops?|hits?|leads?|leaves?|starts?|ends?|announces?|reveals?|returns?|questions?|fights?|pushes?|strikes?|votes?|approves?|blocks?|accuses?|offers?|promises?|threatens?|turns?|tries?|looks?|brings?|sets?|puts?|shifts?|changes?|shows?|reaches?|emerges?|sparks?|struggles?|continues?|prepares?|discusses?|weighs?|considers?|explains?|investigates?|discovers?|reconsiders?)$/i;
+function headlineMarkup(title){
+ const original=String(title||'').trim();if(!original)return '';
+ const words=original.split(/\s+/),clean=w=>w.replace(/^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}'’.-]+$/gu,'');
+ const normalized=words.map(clean),lower=normalized.map(w=>w.toLowerCase());
+ let start=-1,end=-1;
+ // Prefer known multiword people, places and institutions, even after introductory clauses.
+ const candidates=knownSubjects.slice().sort((a,b)=>b.split(' ').length-a.split(' ').length);
+ for(const phrase of candidates){const p=phrase.toLowerCase().split(' ');for(let i=0;i<=words.length-p.length;i++){if(p.every((w,j)=>lower[i+j]===w)){if(start<0||i<start||(i===start&&p.length>end-start)){start=i;end=i+p.length}break}}}
+ // For introductory clauses, find the first likely subject after the comma.
+ let offset=0;
+ if(leadIns.test(lower[0]||'')){const comma=words.findIndex((w,i)=>i<9&&/[,;:]$/.test(w));if(comma>=0&&comma<words.length-1)offset=comma+1;else if(/^(how|why|what|when|where|who|whether)$/i.test(lower[0]))offset=1}
+ // Recognize a proper name only when it looks like a name, not generic headline title case.
+ if(start<0){for(let i=offset;i<Math.min(words.length,11);i++){if(minorWords.test(lower[i])||verbWords.test(lower[i]))continue;
+ const isCapitalized=/^\\p{Lu}/u.test(normalized[i]||'');
+ const next=normalized[i+1]||'';
+ const isName=isCapitalized&&(/^\\p{Lu}/u.test(next)&&!minorWords.test(next)&&!verbWords.test(next)||/^[A-Z]{2,}$/.test(normalized[i]));
+ if(isName){start=i;end=i+1;while(end<words.length&&end-start<5&&/^\\p{Lu}/u.test(normalized[end])&&!verbWords.test(normalized[end]))end++;break}
+ }}
+ // Otherwise highlight the first substantive noun phrase, ending before a likely verb.
+ if(start<0){start=offset;while(start<words.length&&minorWords.test(lower[start]))start++;if(start>=words.length)start=0;end=Math.min(words.length,start+4);for(let i=start+1;i<end;i++){if(verbWords.test(normalized[i])||/[,:;!?]$/.test(words[i-1])){end=i;break}}if(end<=start)end=start+1}
+ // Avoid goopy text consuming the entire headline.
+ if(end-start>5)end=start+5;
+ if(start===0&&end===words.length&&words.length>2)end=2;
+ return (start?safe(words.slice(0,start).join(' '))+' ':'')+
+ '<span class="headline-lead">'+safe(words.slice(start,end).join(' '))+'</span>'+
+ (end<words.length?' '+safe(words.slice(end).join(' ')):'');
+}
 function render(){document.querySelector('#section').textContent=selected;document.querySelector('#nav').innerHTML=sections.map(s=>'<button data-section="'+safe(s)+'" class="'+(s===selected?'active':'')+'">'+safe(s)+'</button>').join('');let items;const all=allArticles();if(selected==='All')items=interleave(all);else if(sourceTabs.has(selected))items=interleave(all.filter(a=>a.source===selected));else items=interleave(all.filter(a=>matchesTopic(a,selected)));document.querySelector('#stories').innerHTML=items.length?items.map((a,i)=>{let url=a.url;let source=a.source||'NYT';let mark=marks[source]||'•';let archive='https://archive.is/'+a.url;return '<article class="story '+(i===0?'featured':'')+'"><div class="story-body"><div class="story-copy"><div class="meta"><span class="source-mark" data-source="'+safe(source)+'" title="'+safe(source)+'">'+safe(mark)+'</span><span class="story-date">'+(a.date?safe(new Date(a.date).toLocaleDateString('en-US',{month:'numeric',day:'numeric'})):'')+'</span></div><h2><a href="'+safe(url)+'" target="_blank" rel="noopener noreferrer">'+headlineMarkup(a.title)+'</a></h2>'+(a.summary?'<p>'+safe(a.summary)+'</p>':'')+(source==='NYT'?'<a class="archive-link" aria-label="Look for archived copy on archive.is" title="Look for archived copy on archive.is" href="'+safe(archive)+'" target="_blank" rel="noopener noreferrer"><img src="assets/archive-eyes.svg" alt="" loading="lazy"></a>':'')+'</div>'+(a.image?'<a class="story-image" href="'+safe(url)+'" target="_blank" rel="noopener noreferrer" aria-label="Read '+safe(a.title)+'"><img class="stamp" src="'+safe(a.image)+'" alt="" loading="lazy" referrerpolicy="no-referrer"></a>':'')+'</div></article>'}).join(''):'<p class="empty">No headlines available for this section yet.</p>';document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{selected=b.dataset.section;render()})}
 fetch('headlines.json?x='+Math.floor(Date.now()/900000)).then(r=>{if(!r.ok)throw Error('Feed unavailable');return r.json()}).then(d=>{data=d;render()}).catch(()=>{document.querySelector('#stories').innerHTML='<p class="empty">Headlines are not available yet. The scheduled update will populate this page shortly.</p>';render()});
 </script></body></html>
