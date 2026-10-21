@@ -251,7 +251,7 @@ async function openArticle(url){
  if(request!==readerRequest||reader.hidden)return;
  content.replaceChildren();
  if(full&&full.length>=1000){
-  for(const paragraph of full.split(/\n\s*\n|\n/).filter(Boolean)){const p=document.createElement('p');p.textContent=paragraph;content.append(p)}
+  for(const paragraph of full.replace(/\\n/g,'\n').split(/\n\s*\n|\n/).filter(Boolean)){const p=document.createElement('p');p.textContent=paragraph;content.append(p)}
  }else{fallback.hidden=false}
 }
 function readOffline(url){openArticle(url)}
