@@ -7,6 +7,7 @@ FEEDS = {
 headers={"User-Agent":"Mozilla/5.0 (compatible; GazerRSS/1.0)"}
 EXTRA = {
 "The Guardian US":"https://www.theguardian.com/us/rss",
+"The Guardian Cartoons":"https://www.theguardian.com/tone/cartoons/rss",
 "The Intercept":"https://theintercept.com/feed/?lang=en",
 "The Nation":"https://www.thenation.com/feed/?post_type=article",
 "Jacobin":"https://jacobin.com/feed/",
@@ -34,7 +35,7 @@ def author_name(item):
             if name and name not in names: names.append(name)
     return ", ".join(names[:6])
 LANGUAGES = {
- "NYT":"en","The Guardian US":"en","The Intercept":"en","The Nation":"en","Jacobin":"en","ProPublica":"en","In These Times":"en",
+ "NYT":"en","The Guardian US":"en","The Guardian Cartoons":"en","The Intercept":"en","The Nation":"en","Jacobin":"en","ProPublica":"en","In These Times":"en",
  "Al Jazeera":"en","taz":"de","Mediapart":"fr","L’Humanité":"fr","Le Monde diplomatique":"en",
  "Apache":"nl","Médor":"fr","nd":"de","Middle East Eye":"en","+972 Magazine":"en","Africa Is a Country":"en","Brasil de Fato":"pt"
 }
@@ -128,7 +129,7 @@ for source,feed_url in EXTRA.items():
     except Exception as exc:
         print("Feed error",source,exc)
         sections[source]=json_feed_fallback(source,feed_url)
-    if not sections[source] and source in ("nd","+972 Magazine","Africa Is a Country"):
+    if not sections[source] and source in ("nd","+972 Magazine","Africa Is a Country","The Guardian Cartoons"):
         sections[source]=json_feed_fallback(source,feed_url)
 path=pathlib.Path("headlines.json")
 if path.exists():
