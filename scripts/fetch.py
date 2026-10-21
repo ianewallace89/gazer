@@ -13,6 +13,14 @@ EXTRA = {
 "ProPublica":"https://www.propublica.org/feeds/propublica/main",
 "In These Times":"https://inthesetimes.com/rss"
 }
+def author_name(item):
+    names=[]
+    for element in item.iter():
+        tag=element.tag.rsplit("}",1)[-1].lower()
+        if tag in ("creator","author"):
+            name=" ".join((element.text or element.findtext("{http://www.w3.org/2005/Atom}name") or "").split())
+            if name and name not in names: names.append(name)
+    return ", ".join(names[:6])
 sections={}
 for section, slug in FEEDS.items():
     try:
@@ -37,7 +45,7 @@ for section, slug in FEEDS.items():
                     except ValueError: width=0
                     candidates.append((width,candidate))
             if candidates: image=max(candidates,key=lambda x:x[0])[1]
-            stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate"),"image":image,"source":"NYT"})
+            stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate"),"image":image,"source":"NYT","author":author_name(item)})
         sections[section]=stories
         print(section,len(stories))
     except Exception as exc:
@@ -70,7 +78,7 @@ for source,feed_url in EXTRA.items():
                 if match: candidates.append((0,match.group(1)))
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
             tags=[(el.text or el.attrib.get("term","")).strip() for el in item if el.tag.rsplit("}",1)[-1]=="category"]
-            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"tags":tags})
+            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"tags":tags,"author":author_name(item)})
         sections[source]=stories
         print(source,len(stories))
     except Exception as exc:
