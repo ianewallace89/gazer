@@ -77,7 +77,9 @@ for source,feed_url in EXTRA.items():
         for item in (root.findall("./channel/item") or root.findall("{http://www.w3.org/2005/Atom}entry"))[:40]:
             def field(name): return (item.findtext(name) or item.findtext("{http://www.w3.org/2005/Atom}"+name) or "").strip()
             link=field("link") or next((el.attrib.get("href","") for el in item.findall("{http://www.w3.org/2005/Atom}link") if el.attrib.get("rel","alternate")=="alternate"),"")
-            if not link.startswith("https://"): continue
+            link=urllib.parse.urljoin(feed_url,link)
+            if urllib.parse.urlsplit(link).scheme not in ("http","https"): continue
+            if link.startswith("http://"): link="https://"+link[7:]
             raw=html.unescape(field("description") or field("summary") or field("content"))
             summary=re.sub(r"<[^>]+>"," ",raw)
             summary=re.sub(r"\\s+"," ",summary).strip()[:260]
@@ -97,7 +99,7 @@ for source,feed_url in EXTRA.items():
             tags=[(el.text or el.attrib.get("term","")).strip() for el in item if el.tag.rsplit("}",1)[-1]=="category"]
             stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"language":LANGUAGES.get(source,"en"),"tags":tags,"author":author_name(item)})
         sections[source]=stories
-        print(source,len(stories))
+        print(source,len(stories),"feed entries",len(root.findall("./channel/item") or root.findall("{http://www.w3.org/2005/Atom}entry")),flush=True)
     except Exception as exc:
         print("Feed error",source,exc)
         sections[source]=[]
