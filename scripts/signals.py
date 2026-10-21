@@ -8,7 +8,12 @@ PAGES={
  'The Nation':'https://www.thenation.com/',
  'Jacobin':'https://jacobin.com/',
  'ProPublica':'https://www.propublica.org/',
- 'In These Times':'https://inthesetimes.com/'
+ 'In These Times':'https://inthesetimes.com/',
+ 'Al Jazeera':'https://www.aljazeera.com/',
+ 'taz':'https://taz.de/',
+ 'Mediapart':'https://www.mediapart.fr/',
+ 'L’Humanité':'https://www.humanite.fr/',
+ 'Le Monde diplomatique':'https://mondediplo.com/'
 }
 def canonical(url):
  p=urllib.parse.urlsplit(url)
