@@ -112,6 +112,40 @@ const rules={
 };
 function allArticles(){const articles=new Map();for(const [section,arr] of Object.entries(data.sections)){for(const a of arr||[]){if(!a.url)continue;if(articles.has(a.url)){const current=articles.get(a.url);if(!current._sections.includes(section))current._sections.push(section)}else articles.set(a.url,{...a,_sections:[section]})}}return [...articles.values()]}
 function interleave(articles,limit=100){const buckets={};for(const a of articles.sort((a,b)=>Date.parse(b.date||0)-Date.parse(a.date||0))){(buckets[a.source||'NYT']??=[]).push(a)}const order=['NYT','The Guardian US','The Intercept','The Nation','Jacobin','ProPublica','In These Times'];const out=[];while(out.length<limit&&order.some(k=>buckets[k]?.length)){for(const k of order)if(buckets[k]?.length&&out.length<limit)out.push(buckets[k].shift())}return out}
+let editorialSignals={};
+const commonHeadlineWords=new Set('the and for from with that this have will into over after before says said how why what when where which their your about amid among were been more than some other could would should under through between across against today report reports new latest years year people world says says'.split(' '));
+function newsTokens(title){return new Set(String(title||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(t=>t.length>=4&&!commonHeadlineWords.has(t)))}
+function editorialTopStories(all){
+ const now=Date.now(),recent=all.filter(a=>{const age=now-Date.parse(a.date||0);return !Number.isFinite(age)||age<72*3600000});
+ const pool=recent.length?recent:all;
+ const tokens=pool.map(a=>newsTokens(a.title));
+ const values=pool.map((a,i)=>{
+  const signal=editorialSignals[a.url]||{};
+  const ageHours=Math.max(0,(now-Date.parse(a.date||now))/3600000);
+  const freshness=Math.max(0,16-ageHours*.27);
+  const home=signal.homepageRank?Math.max(5,39-Math.min(34,signal.homepageRank)*1.3):0;
+  const nytEditorial=(a.source==='NYT'&&a._sections?.includes('Top Stories'))?24:0;
+  let independentCoverage=0;const sources=new Set();
+  for(let j=0;j<pool.length;j++){
+   if(i===j||pool[j].source===a.source)continue;
+   const shared=[...tokens[i]].filter(w=>tokens[j].has(w)).length;
+   if(shared>=2&&shared/Math.max(2,Math.min(tokens[i].size,tokens[j].size))>=.45)sources.add(pool[j].source);
+  }
+  independentCoverage=Math.min(24,sources.size*10);
+  const engagement=(signal.hnPoints||signal.hnComments)?Math.min(13,Math.log2(1+(signal.hnPoints||0))*1.1+Math.log2(1+(signal.hnComments||0))*1.2):0;
+  return {a,score:freshness+home+nytEditorial+independentCoverage+engagement};
+ });
+ values.sort((x,y)=>y.score-x.score);
+ const out=[],counts={};
+ for(const entry of values){
+  const source=entry.a.source||'NYT';
+  if((counts[source]||0)>=9)continue;
+  counts[source]=(counts[source]||0)+1;out.push(entry.a);
+  if(out.length>=30)break;
+ }
+ return out;
+}
+async function loadEditorialSignals(){try{const r=await fetch('signals.json?x='+Math.floor(Date.now()/900000));if(r.ok){editorialSignals=await r.json();if(selected==='Top Stories')render()}}catch(e){}}
 function matchesTopic(a,topic){if(a.source==='NYT')return a._sections?.includes(topic)||false;const terms=[...(a.tags||[]),a.title||''].join(' ');return rules[topic]?.test(terms)||false}
 const knownSubjects=[
 'New York City','New York Times','Supreme Court','White House','Federal Reserve','United Nations','Wall Street','European Union','Department of Justice','Justice Department','Trump Administration','Biden Administration','House Republicans','Senate Democrats','Donald Trump','Joe Biden','Kamala Harris','Vladimir Putin','Benjamin Netanyahu','Elon Musk','Xi Jinping','United States','New York','Los Angeles','Washington','Congress','Pentagon','NATO','OpenAI','Google','Apple','Amazon','Microsoft','Meta','TikTok','Netflix','Disney','Israel','Palestine','Gaza','Ukraine','Russia','China','Iran','Democrats','Republicans'
@@ -179,14 +213,7 @@ document.querySelector('#nav').innerHTML='<div class="filter-row"><div class="fi
 '<div class="filter-row"><div class="filter-scroll">'+publications.map(([label,value])=>'<button data-source="'+safe(value)+'" class="'+(selectedSource===value?'active':'')+'">'+safe(label)+'</button>').join('')+'</div></div>';
 const all=allArticles();let items;
 if(selected==='Saved')items=Object.values(savedArticles).sort((a,b)=>b.savedAt-a.savedAt);
-else if(selected==='Top Stories'){
-  // Only the NYT HomePage RSS is a genuine editorial lead feed.
-  // Other sources contribute clearly limited recent picks, not implied homepage rankings.
-  const nytLeads=all.filter(a=>a.source==='NYT'&&a._sections?.includes('Top Stories')).slice(0,12);
-  const other=all.filter(a=>a.source!=='NYT').sort((a,b)=>Date.parse(b.date||0)-Date.parse(a.date||0));
-  const counts={};const recentPicks=other.filter(a=>{const key=a.source||'Other';counts[key]=(counts[key]||0)+1;return counts[key]<=2});
-  items=interleave([...nytLeads,...recentPicks],30);
-}else items=interleave(all);
+else if(selected==='Top Stories')items=editorialTopStories(all);else items=interleave(all);
 if(selectedSource)items=items.filter(a=>(a.source||'NYT')===selectedSource);
 if(selectedTopic)items=items.filter(a=>matchesTopic(a,selectedTopic));
 document.querySelector('#stories').innerHTML=items.length?items.map((a,i)=>{let url=a.url;let source=a.source||'NYT';let mark=marks[source]||'•';let archive='https://archive.is/'+a.url;return '<article class="story '+(i===0?'featured':'')+'"><div class="story-body"><div class="story-copy"><div class="meta"><span class="source-mark" data-source="'+safe(source)+'" title="'+safe(source)+'">'+safe(mark)+'</span><span class="story-date">'+(a.date?safe(new Date(a.date).toLocaleDateString('en-US',{month:'numeric',day:'numeric'})):'')+'</span><button class="save-bookmark '+(savedArticles[url]?'is-saved':downloading.has(url)?'is-downloading':'')+'" data-save="'+safe(url)+'" aria-label="'+(savedArticles[url]?'Remove offline download':downloading.has(url)?'Downloading':'Download for offline reading')+'" title="'+(savedArticles[url]?'Remove from Saved':'Save article')+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-6-4.5-6 4.5z"/></svg></button></div><h2><a href="'+safe(url)+'" target="_blank" rel="noopener noreferrer">'+headlineMarkup(a.title)+'</a></h2>'+(a.summary?'<p>'+safe(a.summary)+'</p>':'')+(source==='NYT'?'<a class="archive-link" aria-label="Look for archived copy on archive.is" title="Look for archived copy on archive.is" href="'+safe(archive)+'" target="_blank" rel="noopener noreferrer"><img src="assets/archive-eyes.svg" alt="" loading="lazy"></a>':'')+'</div>'+(a.image?'<a class="story-image" href="'+safe(url)+'" target="_blank" rel="noopener noreferrer" aria-label="Read '+safe(a.title)+'"><img class="stamp" src="'+safe(a.image)+'" alt="" loading="lazy" referrerpolicy="no-referrer"></a>':'')+'</div></article>'}).join(''):'<p class="empty">No headlines available for this section yet.</p>';document.querySelectorAll('[data-section]').forEach(b=>b.onclick=()=>{selected=b.dataset.section;render()});document.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{selectedTopic=b.dataset.topic;render()});document.querySelectorAll('[data-source]').forEach(b=>b.onclick=()=>{selectedSource=b.dataset.source;render()});document.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>toggleSaved(b.dataset.save));document.querySelectorAll('[data-read]').forEach(b=>b.onclick=e=>{e.preventDefault();readOffline(b.dataset.read)})}
@@ -196,5 +223,5 @@ window.addEventListener('touchstart',e=>{if(window.scrollY<=2&&e.touches.length=
 window.addEventListener('touchmove',e=>{if(pullStart===null)return;if(window.scrollY>2){pullStart=null;pull.classList.remove('visible');return}pullDistance=Math.max(0,e.touches[0].clientY-pullStart);if(pullDistance>24&&!refreshing){pull.classList.add('visible');pull.textContent=pullDistance>=85?'↑ Release to refresh':'↓ Pull to refresh'}},{passive:true});
 window.addEventListener('touchend',()=>{if(pullStart!==null&&!refreshing){if(pullDistance>=85)loadHeadlines(true);else pull.classList.remove('visible')}pullStart=null;pullDistance=0},{passive:true});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
-restoreOffline();loadHeadlines();
+restoreOffline();loadHeadlines();loadEditorialSignals();
 </script></body></html>
