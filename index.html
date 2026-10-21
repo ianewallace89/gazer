@@ -185,7 +185,29 @@ function editorialTopStories(all){
  return out;
 }
 async function loadEditorialSignals(){try{const r=await fetch('signals.json?x='+Math.floor(Date.now()/900000));if(r.ok){editorialSignals=await r.json();if(selected==='Top Stories')render()}}catch(e){}}
-function matchesTopic(a,topic){if(a.source==='NYT')return a._sections?.includes(topic)||false;const terms=[...(a.tags||[]),a.title||''].join(' ');return rules[topic]?.test(terms)||false}
+const internationalTopics={
+'World':['monde','international','etranger','europe','asie','afrique','moyen','orient','guerre','krieg','welt','ausland','europa','afrika','asien','nahost','oorlog','wereld','buitenland','europa','afrika','guerra','mundo','exterior','europa','africa','oriente','global'],
+'U.S.':['etats','unis','americain','etatsunis','vereinigte','staaten','usa','amerika','amerikan','verenigde','staten','amerikaan','estados','unidos','estadounid','americano'],
+'Politics':['politique','election','electoral','gouvernement','president','parlement','ministre','assemblee','depute','politisch','politik','wahl','regierung','bundestag','kanzler','minister','parlament','partij','verkiez','regering','politiek','politica','eleicao','eleicoes','governo','presidente','congresso','parlamento'],
+'New York':['nouvelle','york','newyork','neu','york','nova','iorque','brooklyn','manhattan'],
+'Business':['economie','economique','entreprise','finance','banque','travail','syndicat','industrie','marche','wirtschaft','konjunktur','unternehmen','finanz','bank','arbeit','gewerkschaft','handel','markt','economie','bedrijf','financ','vakbond','arbeid','handel','mercado','economia','empresa','banco','trabalho','sindicato','industria','mercado'],
+'Technology':['technologie','numerique','intelligence','artificielle','informatique','internet','digital','technologie','kunstlich','intelligenz','computer','software','netz','technik','technologie','kunstmatige','intelligentie','internet','tecnologia','inteligencia','artificial','computador','digital','internet'],
+'Science':['science','scientifique','recherche','climat','environnement','physique','biologie','espace','wissenschaft','forschung','klima','umwelt','natur','weltraum','wissenschaftler','wetenschap','onderzoek','klimaat','milieu','ruimte','ciencia','cientista','pesquisa','clima','ambiente','espaco'],
+'Health':['sante','medecin','maladie','hopital','vaccin','medizin','gesundheit','krankheit','krankenhaus','arzt','impfung','gezondheid','ziekenhuis','arts','ziekte','vaccin','saude','hospital','medico','doenca','vacina'],
+'Arts':['artiste','artistique','musee','exposition','galerie','theatre','musique','danse','kunst','kunstler','museum','ausstellung','galerie','theater','musik','kultur','kunst','kunstenaar','tentoonstelling','museum','muziek','cultuur','arte','artista','museu','exposicao','galeria','teatro','musica','cultura'],
+'Books':['livre','roman','litterature','auteur','poesie','buch','bucher','literatur','roman','autor','schriftsteller','gedicht','boek','boeken','literatuur','schrijver','roman','livro','livros','literatura','romance','autor','poesia'],
+'Movies':['cinema','film','realisateur','acteur','kino','film','regisseur','schauspieler','bioscoop','film','regisseur','acteur','cinema','filme','diretor','ator','atriz'],
+'Opinion':['opinion','editorial','tribune','chronique','analyse','meinung','kommentar','kolumne','analyse','opinie','commentaar','column','analyse','opiniao','editorial','coluna','analise']
+};
+function matchesTopic(a,topic){
+ if(a.source==='NYT')return a._sections?.includes(topic)||false;
+ const terms=[...(a.tags||[]),a.title||''].join(' ');
+ if(rules[topic]?.test(terms))return true;
+ const language=a.language||sourceLanguages[a.source]||'en';
+ if(language==='en')return false;
+ const tokens=new Set(terms.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^\p{L}\p{N}]+/u).filter(Boolean));
+ return (internationalTopics[topic]||[]).some(stem=>[...tokens].some(token=>token.startsWith(stem)));
+}
 const knownSubjects=[
 'New York City','New York Times','Supreme Court','White House','Federal Reserve','United Nations','Wall Street','European Union','Department of Justice','Justice Department','Trump Administration','Biden Administration','House Republicans','Senate Democrats','Donald Trump','Joe Biden','Kamala Harris','Vladimir Putin','Benjamin Netanyahu','Elon Musk','Xi Jinping','United States','New York','Los Angeles','Washington','Congress','Pentagon','NATO','OpenAI','Google','Apple','Amazon','Microsoft','Meta','TikTok','Netflix','Disney','Israel','Palestine','Gaza','Ukraine','Russia','China','Iran','Democrats','Republicans'
 ];
