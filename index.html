@@ -180,10 +180,12 @@ document.querySelector('#nav').innerHTML='<div class="filter-row"><div class="fi
 const all=allArticles();let items;
 if(selected==='Saved')items=Object.values(savedArticles).sort((a,b)=>b.savedAt-a.savedAt);
 else if(selected==='Top Stories'){
-  const leads=all.filter(a=>a.source==='NYT'&&a._sections?.includes('Top Stories'));
+  // Only the NYT HomePage RSS is a genuine editorial lead feed.
+  // Other sources contribute clearly limited recent picks, not implied homepage rankings.
+  const nytLeads=all.filter(a=>a.source==='NYT'&&a._sections?.includes('Top Stories')).slice(0,12);
   const other=all.filter(a=>a.source!=='NYT').sort((a,b)=>Date.parse(b.date||0)-Date.parse(a.date||0));
-  const firstBySource={};const picks=other.filter(a=>{const key=a.source||'Other';firstBySource[key]=(firstBySource[key]||0)+1;return firstBySource[key]<=5});
-  items=interleave([...leads,...picks]);
+  const counts={};const recentPicks=other.filter(a=>{const key=a.source||'Other';counts[key]=(counts[key]||0)+1;return counts[key]<=2});
+  items=interleave([...nytLeads,...recentPicks],30);
 }else items=interleave(all);
 if(selectedSource)items=items.filter(a=>(a.source||'NYT')===selectedSource);
 if(selectedTopic)items=items.filter(a=>matchesTopic(a,selectedTopic));
