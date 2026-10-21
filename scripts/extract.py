@@ -1,5 +1,14 @@
 import json,re,html,pathlib,urllib.request,urllib.parse,concurrent.futures
 from html.parser import HTMLParser
+class Metadata(HTMLParser):
+ def __init__(self):super().__init__();self.author=""
+ def handle_starttag(self,tag,attrs):
+  if tag!="meta" or self.author:return
+  d=dict(attrs)
+  key=(d.get("name") or d.get("property") or "").lower()
+  if key in ("author","article:author","parsely-author","dc.creator","twitter:creator"):
+   value=" ".join(html.unescape(d.get("content","")).split())
+   if value and not value.startswith(("http:","https:","@")):self.author=value[:200]
 class Reader(HTMLParser):
  def __init__(self): super().__init__();self.depth=0;self.active=False;self.parts=[];self.current=[];self.tag=None
  def handle_starttag(self,tag,attrs):
@@ -27,17 +36,22 @@ def fetch(a):
   with urllib.request.urlopen(req,timeout=9) as res:
    if 'text/html' not in res.headers.get('Content-Type',''):return None
    raw=res.read(650000).decode('utf-8','replace')
+  metadata=Metadata();metadata.feed(raw)
   parser=Reader();parser.feed(raw)
   parts=[];seen=set()
   for p in parser.parts:
    if p not in seen:parts.append(p);seen.add(p)
   content='\n\n'.join(parts)
   if len(content)<1600 or len(parts)<5:return None
-  return a['url'],{'title':a['title'],'source':a.get('source'),'text':content[:90000]}
+  return a['url'],{'title':a['title'],'source':a.get('source'),'author':a.get('author') or metadata.author,'text':content[:90000]}
  except Exception:return None
 with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
  for result in pool.map(fetch,todo):
   if result:existing[result[0]]=result[1]
+# Refresh bylines for already-extracted articles whenever feed metadata has them.
+for url,article in existing.items():
+ source=items.get(url)
+ if source and source.get('author') and not article.get('author'):article['author']=source['author']
 # Limit total published file size and preserve newer saves.
 if len(existing)>400:existing=dict(list(existing.items())[-400:])
 path.write_text(json.dumps(existing,ensure_ascii=False))
