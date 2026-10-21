@@ -68,6 +68,31 @@ for section, slug in FEEDS.items():
     except Exception as exc:
         print("Feed error",section,exc)
         sections[section]=[]
+def json_feed_fallback(source,feed_url):
+    """Public RSS proxy fallback if the Actions runner cannot contact the publisher."""
+    try:
+        url="https://api.rss2json.com/v1/api.json?"+urllib.parse.urlencode({"rss_url":feed_url})
+        with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=18) as response:
+            data=json.load(response)
+        if data.get("status")!="ok": raise ValueError(str(data.get("message","RSS proxy error")))
+        articles=[]
+        for item in data.get("items",[])[:40]:
+            link=(item.get("link") or "").strip()
+            if not link.startswith(("https://","http://")):continue
+            desc=html.unescape(item.get("description") or "")
+            summary=re.sub(r"<[^>]+>"," ",desc)
+            summary=" ".join(summary.split())[:260]
+            image=(item.get("thumbnail") or "").strip()
+            if not image.startswith("https://"):image=""
+            articles.append({"title":html.unescape(item.get("title") or ""),"url":link,"summary":summary,
+                "date":item.get("pubDate") or "","image":image,"source":source,
+                "language":LANGUAGES.get(source,"en"),"tags":item.get("categories") or [],
+                "author":item.get("author") or ""})
+        print("Proxy fallback",source,len(articles),flush=True)
+        return articles
+    except Exception as error:
+        print("Proxy fallback error",source,error,flush=True)
+        return []
 for source,feed_url in EXTRA.items():
     try:
         req=urllib.request.Request(feed_url,headers=headers)
@@ -102,7 +127,9 @@ for source,feed_url in EXTRA.items():
         print(source,len(stories),"feed entries",len(root.findall("./channel/item") or root.findall("{http://www.w3.org/2005/Atom}entry")),flush=True)
     except Exception as exc:
         print("Feed error",source,exc)
-        sections[source]=[]
+        sections[source]=json_feed_fallback(source,feed_url)
+    if not sections[source] and source in ("nd","+972 Magazine","Africa Is a Country"):
+        sections[source]=json_feed_fallback(source,feed_url)
 path=pathlib.Path("headlines.json")
 if path.exists():
     try:
