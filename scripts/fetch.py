@@ -11,7 +11,12 @@ EXTRA = {
 "The Nation":"https://www.thenation.com/feed/?post_type=article",
 "Jacobin":"https://jacobin.com/feed/",
 "ProPublica":"https://www.propublica.org/feeds/propublica/main",
-"In These Times":"https://inthesetimes.com/rss"
+"In These Times":"https://inthesetimes.com/rss",
+"Al Jazeera":"https://www.aljazeera.com/xml/rss/all.xml",
+"taz":"https://taz.de/!p4608;rss/",
+"Mediapart":"https://www.mediapart.fr/articles/feed",
+"L’Humanité":"https://www.humanite.fr/feed",
+"Le Monde diplomatique":"https://mondediplo.com/rss/"
 }
 def author_name(item):
     names=[]
