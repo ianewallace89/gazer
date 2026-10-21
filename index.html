@@ -310,7 +310,7 @@ function isEditorialCartoon(a){
  const tags=Array.isArray(a.tags)?a.tags.join(' '):'';
  return /(?:political|editorial)\\s+(?:cartoon|comic)|(?:cartoon|caricature|politische karikatur|dessin de presse|charge politique|cartum político)/i.test([a.title||'',tags].join(' '));
 }
-function isPhotoFeature(a){return !!a.image&&['The Guardian Photography','The New Yorker Photography'].includes(a.source)}
+function isPhotoFeature(a){return !!a.image&&(a.photoFeature===true||['The Guardian Photography','The New Yorker Photography'].includes(a.source))}
 function photoMarkup(a){
  const date=a.date?new Date(a.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
  const credit=[a.author,a.source,date].filter(Boolean).join(' · ');
