@@ -9,6 +9,9 @@ EXTRA = {
 "The Guardian US":"https://www.theguardian.com/us/rss",
 "The Guardian Cartoons":"https://www.theguardian.com/tone/cartoons/rss",
 "The New Yorker Cartoons":"https://www.newyorker.com/feed/humor/rss",
+"Le Monde Dessins":"https://www.lemonde.fr/dessins/rss_full.xml",
+"Cartooning for Peace":"https://www.cartooningforpeace.org/en/feed/",
+"Cartoon Movement":"https://cartoonmovement.substack.com/feed",
 "The Intercept":"https://theintercept.com/feed/?lang=en",
 "The Nation":"https://www.thenation.com/feed/?post_type=article",
 "Jacobin":"https://jacobin.com/feed/",
@@ -36,7 +39,7 @@ def author_name(item):
             if name and name not in names: names.append(name)
     return ", ".join(names[:6])
 LANGUAGES = {
- "NYT":"en","The Guardian US":"en","The Guardian Cartoons":"en","The New Yorker Cartoons":"en","The Intercept":"en","The Nation":"en","Jacobin":"en","ProPublica":"en","In These Times":"en",
+ "NYT":"en","The Guardian US":"en","The Guardian Cartoons":"en","The New Yorker Cartoons":"en","Le Monde Dessins":"fr","Cartooning for Peace":"en","Cartoon Movement":"en","The Intercept":"en","The Nation":"en","Jacobin":"en","ProPublica":"en","In These Times":"en",
  "Al Jazeera":"en","taz":"de","Mediapart":"fr","L’Humanité":"fr","Le Monde diplomatique":"en",
  "Apache":"nl","Médor":"fr","nd":"de","Middle East Eye":"en","+972 Magazine":"en","Africa Is a Country":"en","Brasil de Fato":"pt"
 }
@@ -125,6 +128,8 @@ for source,feed_url in EXTRA.items():
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
             tags=[(el.text or el.attrib.get("term","")).strip() for el in item if el.tag.rsplit("}",1)[-1]=="category"]
             stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"language":LANGUAGES.get(source,"en"),"tags":tags,"author":author_name(item)})
+        if source=="Cartooning for Peace":
+            stories=[a for a in stories if any(t in (a["url"]+" "+a["title"]).lower() for t in ("editorial","edito","cartoon"))]
         if source=="The New Yorker Cartoons":
             stories=[a for a in stories if "/cartoons/" in a["url"] or "cartoon" in a["title"].lower()]
         sections[source]=stories
