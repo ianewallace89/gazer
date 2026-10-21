@@ -45,6 +45,18 @@ LANGUAGES = {
  "Al Jazeera":"en","taz":"de","Mediapart":"fr","L’Humanité":"fr","Le Monde diplomatique":"en",
  "Apache":"nl","Médor":"fr","nd":"de","Middle East Eye":"en","+972 Magazine":"en","Africa Is a Country":"en","Brasil de Fato":"pt"
 }
+PHOTO_HINTS=re.compile(r"(?:photograph(?:y|s|ers|ic)?|photo(?:s|graphy|essay|journal)|picture(?:s)?|in[ -]pictures|in[ -]photos|bildstrecke|fotograf(?:ie|ía)|fotos?|fotoreportage|reportage photo|en images|em imagens|galeri(?:e|a) de fotos|diaporama)",re.I)
+def photo_candidate(article):
+    if not article.get("image"): return False
+    title=article.get("title","")
+    url=urllib.parse.urlsplit(article.get("url","")).path.replace("-"," ").replace("_"," ")
+    tags=" ".join(str(t) for t in article.get("tags",[]))
+    # Require an explicit photo-feature signal, not simply an article with a thumbnail.
+    return bool(PHOTO_HINTS.search(" ".join((title,url,tags))))
+def mark_photos(stories):
+    for story in stories:
+        if photo_candidate(story):story["photoFeature"]=True
+    return stories
 sections={}
 for section, slug in FEEDS.items():
     try:
@@ -70,7 +82,7 @@ for section, slug in FEEDS.items():
                     candidates.append((width,candidate))
             if candidates: image=max(candidates,key=lambda x:x[0])[1]
             stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate"),"image":image,"source":"NYT","language":"en","author":author_name(item)})
-        sections[section]=stories
+        sections[section]=mark_photos(stories)
         print(section,len(stories))
     except Exception as exc:
         print("Feed error",section,exc)
@@ -96,7 +108,7 @@ def json_feed_fallback(source,feed_url):
                 "language":LANGUAGES.get(source,"en"),"tags":item.get("categories") or [],
                 "author":item.get("author") or ""})
         print("Proxy fallback",source,len(articles),flush=True)
-        return articles
+        return mark_photos(articles)
     except Exception as error:
         print("Proxy fallback error",source,error,flush=True)
         return []
@@ -136,7 +148,7 @@ for source,feed_url in EXTRA.items():
             stories=[a for a in stories if any(t in (a["url"]+" "+a["title"]).lower() for t in ("editorial","edito","cartoon"))]
         if source=="The New Yorker Cartoons":
             stories=[a for a in stories if "/cartoons/" in a["url"] or "cartoon" in a["title"].lower()]
-        sections[source]=stories
+        sections[source]=mark_photos(stories)
         print(source,len(stories),"feed entries",len(root.findall("./channel/item") or root.findall("{http://www.w3.org/2005/Atom}entry")),flush=True)
     except Exception as exc:
         print("Feed error",source,exc)
