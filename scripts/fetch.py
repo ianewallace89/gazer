@@ -8,7 +8,7 @@ headers={"User-Agent":"Mozilla/5.0 (compatible; GazerRSS/1.0)"}
 EXTRA = {
 "The Guardian US":"https://www.theguardian.com/us/rss",
 "The Guardian Cartoons":"https://www.theguardian.com/tone/cartoons/rss",
-"The New Yorker Cartoons":"https://www.newyorker.com/feed/cartoons/rss",
+"The New Yorker Cartoons":"https://www.newyorker.com/feed/humor/rss",
 "The Intercept":"https://theintercept.com/feed/?lang=en",
 "The Nation":"https://www.thenation.com/feed/?post_type=article",
 "Jacobin":"https://jacobin.com/feed/",
@@ -125,6 +125,8 @@ for source,feed_url in EXTRA.items():
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
             tags=[(el.text or el.attrib.get("term","")).strip() for el in item if el.tag.rsplit("}",1)[-1]=="category"]
             stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"language":LANGUAGES.get(source,"en"),"tags":tags,"author":author_name(item)})
+        if source=="The New Yorker Cartoons":
+            stories=[a for a in stories if "/cartoons/" in a["url"] or "cartoon" in a["title"].lower()]
         sections[source]=stories
         print(source,len(stories),"feed entries",len(root.findall("./channel/item") or root.findall("{http://www.w3.org/2005/Atom}entry")),flush=True)
     except Exception as exc:
