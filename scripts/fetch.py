@@ -16,7 +16,14 @@ EXTRA = {
 "taz":"https://taz.de/!p4608;rss/",
 "Mediapart":"https://www.mediapart.fr/articles/feed",
 "L’Humanité":"https://www.humanite.fr/feed",
-"Le Monde diplomatique":"https://mondediplo.com/rss/"
+"Le Monde diplomatique":"https://mondediplo.com/rss/",
+"Apache":"https://apache.be/feed/artikels",
+"Médor":"https://medor.coop/rss.xml",
+"nd":"https://www.nd-aktuell.de/rss/aktuell.php",
+"Middle East Eye":"https://www.middleeasteye.net/rss",
+"+972 Magazine":"https://www.972mag.com/feed/",
+"Africa Is a Country":"https://africasacountry.com/feed/",
+"Brasil de Fato":"https://www.brasildefato.com.br/feed/"
 }
 def author_name(item):
     names=[]
@@ -26,6 +33,11 @@ def author_name(item):
             name=" ".join((element.text or element.findtext("{http://www.w3.org/2005/Atom}name") or "").split())
             if name and name not in names: names.append(name)
     return ", ".join(names[:6])
+LANGUAGES = {
+ "NYT":"en","The Guardian US":"en","The Intercept":"en","The Nation":"en","Jacobin":"en","ProPublica":"en","In These Times":"en",
+ "Al Jazeera":"en","taz":"de","Mediapart":"fr","L’Humanité":"fr","Le Monde diplomatique":"en",
+ "Apache":"nl","Médor":"fr","nd":"de","Middle East Eye":"en","+972 Magazine":"en","Africa Is a Country":"en","Brasil de Fato":"pt"
+}
 sections={}
 for section, slug in FEEDS.items():
     try:
@@ -50,7 +62,7 @@ for section, slug in FEEDS.items():
                     except ValueError: width=0
                     candidates.append((width,candidate))
             if candidates: image=max(candidates,key=lambda x:x[0])[1]
-            stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate"),"image":image,"source":"NYT","author":author_name(item)})
+            stories.append({"title":field("title"),"url":link,"summary":summary[:260],"date":field("pubDate"),"image":image,"source":"NYT","language":"en","author":author_name(item)})
         sections[section]=stories
         print(section,len(stories))
     except Exception as exc:
@@ -83,7 +95,7 @@ for source,feed_url in EXTRA.items():
                 if match: candidates.append((0,match.group(1)))
             image=max(candidates,key=lambda x:x[0])[1] if candidates else ""
             tags=[(el.text or el.attrib.get("term","")).strip() for el in item if el.tag.rsplit("}",1)[-1]=="category"]
-            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"tags":tags,"author":author_name(item)})
+            stories.append({"title":field("title"),"url":link,"summary":summary,"date":field("pubDate") or field("published") or field("updated"),"image":image,"source":source,"language":LANGUAGES.get(source,"en"),"tags":tags,"author":author_name(item)})
         sections[source]=stories
         print(source,len(stories))
     except Exception as exc:
