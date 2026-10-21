@@ -13,7 +13,14 @@ PAGES={
  'taz':'https://taz.de/',
  'Mediapart':'https://www.mediapart.fr/',
  'L’Humanité':'https://www.humanite.fr/',
- 'Le Monde diplomatique':'https://mondediplo.com/'
+ 'Le Monde diplomatique':'https://mondediplo.com/',
+ 'Apache':'https://apache.be/',
+ 'Médor':'https://medor.coop/',
+ 'nd':'https://www.nd-aktuell.de/',
+ 'Middle East Eye':'https://www.middleeasteye.net/',
+ '+972 Magazine':'https://www.972mag.com/',
+ 'Africa Is a Country':'https://africasacountry.com/',
+ 'Brasil de Fato':'https://www.brasildefato.com.br/'
 }
 def canonical(url):
  p=urllib.parse.urlsplit(url)
