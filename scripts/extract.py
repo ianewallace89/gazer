@@ -31,7 +31,7 @@ def fetch(a):
   parts=[];seen=set()
   for p in parser.parts:
    if p not in seen:parts.append(p);seen.add(p)
-  content='\\n\\n'.join(parts)
+  content='\n\n'.join(parts)
   if len(content)<1600 or len(parts)<5:return None
   return a['url'],{'title':a['title'],'source':a.get('source'),'text':content[:90000]}
  except Exception:return None
