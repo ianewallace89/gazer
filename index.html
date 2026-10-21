@@ -318,4 +318,35 @@ window.addEventListener('touchend',()=>{if(pullStart!==null&&!refreshing){if(pul
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 restoreOffline();loadHeadlines();loadEditorialSignals();
 const masthead=document.querySelector('body>header');function updateMasthead(){masthead.classList.toggle('is-scrolled',window.scrollY>45)}window.addEventListener('scroll',updateMasthead,{passive:true});updateMasthead();
+</script>
+<script>
+(function(){
+const SECRET='thirty.sync.secret', API='https://thirty-sync.ianedwardwallace.workers.dev/',PREFIX='thirty-sync-v1-';
+let context=null,working=false,clock=null;
+const btn=document.createElement('button');btn.textContent='SYNC';btn.setAttribute('aria-label','Synchronize saved articles');btn.style.cssText='position:fixed;right:12px;bottom:18px;z-index:1000;border:2px solid #000;border-radius:18px;background:#004170;color:white;font:700 11px Arial;padding:8px 12px;cursor:pointer';document.body.append(btn);
+const label=t=>btn.textContent=t;
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const un64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function hash(s){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s))}
+async function derive(secret){return {id:[...new Uint8Array(await hash(PREFIX+'id|'+secret))].map(x=>x.toString(16).padStart(2,'0')).join(''),key:await crypto.subtle.importKey('raw',await hash(PREFIX+'key|'+secret),{name:'AES-GCM'},false,['encrypt','decrypt'])}}
+async function encrypt(x){const iv=crypto.getRandomValues(new Uint8Array(12));return {iv:b64(iv),cipher:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv},context.key,new TextEncoder().encode(JSON.stringify(x))))}}
+async function decrypt(x){return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:un64(x.iv)},context.key,un64(x.cipher))))}
+async function api(method,body){const r=await fetch(API+context.id,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,cache:'no-store'});if(!r.ok)throw Error('Sync '+r.status);return r.json()}
+function localIndex(){return Object.fromEntries(Object.values(savedArticles).map(a=>[a.url,{url:a.url,title:a.title,source:a.source,author:a.author,savedAt:a.savedAt||Date.now(),description:a.description||'',image:a.image||''}]))}
+async function sync(){if(!context||working)return;working=true;label('SYNCING');try{
+const response=await api('GET');const remote=response.blob?await decrypt(response.blob):{articles:{}};
+const local=localIndex(),merged={articles:{...(remote.articles||{}),...local}};
+for(const [url,a] of Object.entries(remote.articles||{})){if(!merged.articles[url]||Number(a.savedAt)>Number(merged.articles[url].savedAt))merged.articles[url]=a}
+if(JSON.stringify(merged)!==JSON.stringify(remote))await api('PUT',{blob:await encrypt(merged)});
+const missing=Object.values(merged.articles).filter(a=>!savedArticles[a.url]);
+if(missing.length){if(!articleCatalog){const res=await fetch('articles.json',{cache:'no-store'});if(res.ok)articleCatalog=await res.json()}
+for(const a of missing){const entry=articleCatalog?.[a.url];if(!entry?.text||entry.text.length<1000)continue;const copy={...a,text:entry.text,author:a.author||entry.author||''};await storeOffline(copy);savedArticles[a.url]=copy}
+render()}
+label(missing.some(a=>!savedArticles[a.url])?'PARTIAL':'SYNCED');
+}catch(e){label('SYNC ERROR');console.warn('-30- sync',e)}finally{working=false}}
+async function connect(secret){context=await derive(secret);sessionStorage.setItem(SECRET,secret);await sync();if(!clock)clock=setInterval(()=>{if(!document.hidden)sync()},120000)}
+btn.onclick=()=>{if(context)return sync();const secret=prompt('Enter your existing Serving / Rat Race sync key');if(secret)connect(secret.trim())};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&context)sync()});
+const secret=sessionStorage.getItem(SECRET);if(secret)setTimeout(()=>connect(secret).catch(()=>label('SYNC ERROR')),1200);
+})();
 </script></body></html>
