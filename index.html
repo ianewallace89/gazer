@@ -271,7 +271,7 @@ function openOfflineDB(){return new Promise((resolve,reject)=>{const req=indexed
 async function storeOffline(a){const db=offlineDB||await openOfflineDB();offlineDB=db;return new Promise((resolve,reject)=>{const tx=db.transaction('articles','readwrite');tx.objectStore('articles').put(a);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 async function deleteOffline(url){const db=offlineDB||await openOfflineDB();offlineDB=db;return new Promise((resolve,reject)=>{const tx=db.transaction('articles','readwrite');tx.objectStore('articles').delete(url);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 async function restoreOffline(){try{offlineDB=await openOfflineDB();const items=await new Promise((resolve,reject)=>{const req=offlineDB.transaction('articles').objectStore('articles').getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});savedArticles=Object.fromEntries(items.filter(a=>a.text&&a.text.length>1000).map(a=>[a.url,a]));render()}catch(e){console.warn('Offline library unavailable',e)}}
-async function toggleSaved(url){if(downloading.has(url))return;if(savedArticles[url]){await deleteOffline(url);delete savedArticles[url];render();return}const article=allArticles().find(a=>a.url===url);if(!article)return;downloading.add(url);render();try{if(!navigator.onLine)throw Error('Connect to download this article');if(!articleCatalog){const response=await fetch('articles.json',{cache:'no-store'});if(!response.ok)throw Error('Offline catalog unavailable');articleCatalog=await response.json()}const entry=articleCatalog[url];if(!entry||!entry.text||entry.text.length<1000)throw Error('Full text is not available for offline saving yet');const copy={...article,author:article.author||entry.author||'',text:entry.text,savedAt:Date.now()};await storeOffline(copy);savedArticles[url]=copy}catch(e){alert(e.message)}finally{downloading.delete(url);render()}}
+async function toggleSaved(url,keepFeed=false){if(downloading.has(url))return;if(savedArticles[url]){if(keepFeed)return;await deleteOffline(url);delete savedArticles[url];render();return}const article=allArticles().find(a=>a.url===url);if(!article)return;downloading.add(url);if(!keepFeed)render();try{if(!navigator.onLine)throw Error('Connect to download this article');if(!articleCatalog){const response=await fetch('articles.json',{cache:'no-store'});if(!response.ok)throw Error('Offline catalog unavailable');articleCatalog=await response.json()}const entry=articleCatalog[url];if(!entry||!entry.text||entry.text.length<1000)throw Error('Full text is not available for offline saving yet');const copy={...article,author:article.author||entry.author||'',text:entry.text,savedAt:Date.now()};await storeOffline(copy);savedArticles[url]=copy}catch(e){alert(e.message)}finally{downloading.delete(url);if(!keepFeed)render();else{document.querySelectorAll('[data-save]').forEach(b=>{if(b.dataset.save===url){b.classList.toggle('is-saved',!!savedArticles[url]);b.classList.remove('is-downloading');b.setAttribute('aria-label',savedArticles[url]?'Remove from Saved':'Save for offline reading')}})}}}
 let readerRequest=0;
 async function openArticle(url){
  const article=savedArticles[url]||allArticles().find(a=>a.url===url);
@@ -327,7 +327,7 @@ let discoverDismissed=new Set();
 function discoverKind(a){return isEditorialCartoon(a)?'cartoon':isPhotoFeature(a)?'photo':'article'}
 function discoverKeys(a){const kind=discoverKind(a),keys=[kind+':source:'+(a.source||'')];for(const tag of (a.tags||[]).slice(0,8))keys.push(kind+':tag:'+String(tag).toLowerCase());for(const topic of topics)if(matchesTopic(a,topic))keys.push(kind+':topic:'+topic);return keys}
 function discoverScore(a){return discoverKeys(a).reduce((n,k)=>n+(discoverPrefs[k]||0),0)}
-function discoverVote(a,direction){for(const key of discoverKeys(a))discoverPrefs[key]=Math.max(-12,Math.min(12,(discoverPrefs[key]||0)+direction));localStorage.setItem('thirty-discover-prefs',JSON.stringify(discoverPrefs));discoverDismissed.add(a.url)}
+function discoverVote(a,direction){for(const key of discoverKeys(a))discoverPrefs[key]=Math.max(-12,Math.min(12,(discoverPrefs[key]||0)+direction));localStorage.setItem('thirty-discover-prefs',JSON.stringify(discoverPrefs));if(direction<0)discoverDismissed.add(a.url)}
 function installDiscoverSwipes(lookup){
  if(selected!=='Top Stories')return;
  document.querySelectorAll('#stories .story,#stories .cartoon-card,#stories .photo-feature').forEach(card=>{
@@ -344,7 +344,8 @@ function installDiscoverSwipes(lookup){
   function finish(){if(!tracking)return;tracking=false;card.style.transition='transform .2s ease, opacity .2s ease';
    if(Math.abs(delta)<65){card.style.transform='';swiped=false;return}
    const direction=delta>0?1:-1;discoverVote(article,direction);
-   card.style.transform='translateX('+(direction*window.innerWidth)+'px)';card.style.opacity='0';
+   if(direction>0){card.style.transform='';card.style.opacity='1';if(!savedArticles[article.url])toggleSaved(article.url,true);return}
+   card.style.transform='translateX(-'+window.innerWidth+'px)';card.style.opacity='0';
    setTimeout(render,220);
   }
   card.addEventListener('touchstart',e=>{const t=e.touches[0];if(t)begin(t.clientX,t.clientY)},{passive:true});
