@@ -350,8 +350,7 @@ function photoMarkup(a){
  return '<figure class="photo-feature"><a href="'+safe(a.url)+'" target="_blank" rel="noopener noreferrer" aria-label="View original photo feature: '+safe(a.title)+'"><img src="'+safe(a.image)+'" alt="'+safe(a.title)+'" loading="lazy" referrerpolicy="no-referrer"></a><figcaption><strong>'+safe(a.title)+'</strong><span>'+safe(credit)+'</span></figcaption></figure>';
 }
 function cartoonMarkup(a){
- const source=a.source||'Publication';const credit=[a.author,source,a.date?new Date(a.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):''].filter(Boolean).join(' · ');
- return '<aside class="cartoon-card"><a href="'+safe(a.url)+'" target="_blank" rel="noopener noreferrer" aria-label="View original cartoon: '+safe(a.title)+'">'+(a.image?'<img src="'+safe(a.image)+'" loading="lazy" referrerpolicy="no-referrer" alt="'+safe(a.title)+'">':'<span class="cartoon-open">View cartoon at publication ↗</span>')+'</a><div class="cartoon-credit"><strong>'+safe(a.title)+'</strong><br>'+safe(credit)+'</div></aside>';
+ return '<aside class="cartoon-card"><a href="'+safe(a.url)+'" target="_blank" rel="noopener noreferrer" aria-label="View original cartoon: '+safe(a.title)+'">'+(a.image?'<img src="'+safe(a.image)+'" loading="lazy" referrerpolicy="no-referrer" alt="'+safe(a.title)+'">':'<span class="cartoon-open">View cartoon at publication ↗</span>')+'</a></aside>';
 }
 
 // Discover preferences are local to this browser; ordinary feeds remain unchanged.
