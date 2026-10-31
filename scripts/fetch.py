@@ -35,7 +35,6 @@ EXTRA = {
 "THE CITY":"https://www.thecity.nyc/rss/index.xml",
 "Hell Gate":"https://hellgatenyc.com/all-posts/rss",
 "City Limits":"https://citylimits.org/feed",
-"Brooklyn Eagle":"https://brooklyneagle.com/feed/",
 "Streetsblog NYC":"https://nyc.streetsblog.org/feed",
 "Artforum":"https://www.artforum.com/feed",
 "Artnet News":"https://news.artnet.com/feed/",
