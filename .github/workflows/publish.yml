@@ -23,6 +23,8 @@ jobs:
         run: python3 scripts/fetch.py
       - name: Collect homepage and public discussion signals
         run: python3 scripts/signals.py
+      - name: Install article extraction library
+        run: python3 -m pip install --disable-pip-version-check 'trafilatura>=1.12,<3'
       - name: Extract public articles for offline reading
         run: python3 scripts/extract.py
       - name: Prepare Pages files
