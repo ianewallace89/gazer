@@ -301,7 +301,7 @@ function openOfflineDB(){return new Promise((resolve,reject)=>{const req=indexed
 async function storeOffline(a){const db=offlineDB||await openOfflineDB();offlineDB=db;return new Promise((resolve,reject)=>{const tx=db.transaction('articles','readwrite');tx.objectStore('articles').put(a);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 async function deleteOffline(url){const db=offlineDB||await openOfflineDB();offlineDB=db;return new Promise((resolve,reject)=>{const tx=db.transaction('articles','readwrite');tx.objectStore('articles').delete(url);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 async function restoreOffline(){try{offlineDB=await openOfflineDB();const items=await new Promise((resolve,reject)=>{const req=offlineDB.transaction('articles').objectStore('articles').getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});savedArticles=Object.fromEntries(items.filter(a=>a.text&&a.text.length>1000).map(a=>[a.url,a]));render()}catch(e){console.warn('Offline library unavailable',e)}}
-async function toggleSaved(url,keepFeed=false){if(downloading.has(url))return;if(savedArticles[url]){if(keepFeed)return;await deleteOffline(url);delete savedArticles[url];render();return}const article=allArticles().find(a=>a.url===url);if(!article)return;downloading.add(url);if(!keepFeed)render();try{if(!navigator.onLine)throw Error('Connect to download this article');if(!articleCatalog){const response=await fetch('articles.json',{cache:'no-store'});if(!response.ok)throw Error('Offline catalog unavailable');articleCatalog=await response.json()}const entry=articleCatalog[url];if(!entry||!entry.text||entry.text.length<1000)throw Error('Full text is not available for offline saving yet');const copy={...article,author:article.author||entry.author||'',text:entry.text,savedAt:Date.now()};await storeOffline(copy);savedArticles[url]=copy}catch(e){alert(e.message)}finally{downloading.delete(url);if(!keepFeed)render();else{document.querySelectorAll('[data-save]').forEach(b=>{if(b.dataset.save===url){b.classList.toggle('is-saved',!!savedArticles[url]);b.classList.remove('is-downloading');b.setAttribute('aria-label',savedArticles[url]?'Remove from Saved':'Save for offline reading')}})}}}
+async function toggleSaved(url,keepFeed=false){if(downloading.has(url))return;if(savedArticles[url]){if(keepFeed)return;await deleteOffline(url);delete savedArticles[url];render();return}const article=allArticles().find(a=>a.url===url);if(!article)return;downloading.add(url);if(!keepFeed)render();try{if(!navigator.onLine)throw Error('Connect to download this article');if(!articleCatalog){const response=await fetch('articles.json',{cache:'no-store'});if(!response.ok)throw Error('Offline catalog unavailable');articleCatalog=await response.json()}const entry=articleCatalog[url];if(!entry||!entry.text||entry.text.length<500)throw Error('Full text is not available for offline saving yet');const copy={...article,author:article.author||entry.author||'',text:entry.text,savedAt:Date.now()};await storeOffline(copy);savedArticles[url]=copy}catch(e){alert(e.message)}finally{downloading.delete(url);if(!keepFeed)render();else{document.querySelectorAll('[data-save]').forEach(b=>{if(b.dataset.save===url){b.classList.toggle('is-saved',!!savedArticles[url]);b.classList.remove('is-downloading');b.setAttribute('aria-label',savedArticles[url]?'Remove from Saved':'Save for offline reading')}})}}}
 let readerRequest=0;
 async function openArticle(url){
  const article=savedArticles[url]||allArticles().find(a=>a.url===url);
@@ -327,7 +327,7 @@ async function openArticle(url){
  }
  if(request!==readerRequest||reader.hidden)return;
  content.replaceChildren();
- if(full&&full.length>=1000){
+ if(full&&full.length>=500){
   for(const paragraph of full.replace(/\\n/g,'\n').split(/\n\s*\n|\n/).filter(Boolean)){const p=document.createElement('p');p.textContent=paragraph;content.append(p)}
  }else{fallback.hidden=false}
 }
@@ -439,7 +439,7 @@ for(const [url,a] of Object.entries(remote.articles||{})){if(!merged.articles[ur
 if(JSON.stringify(merged)!==JSON.stringify(remote))await api('PUT',{blob:await encrypt(merged)});
 const missing=Object.values(merged.articles).filter(a=>!savedArticles[a.url]);
 if(missing.length){if(!articleCatalog){const res=await fetch('articles.json',{cache:'no-store'});if(res.ok)articleCatalog=await res.json()}
-for(const a of missing){const entry=articleCatalog?.[a.url];if(!entry?.text||entry.text.length<1000)continue;const copy={...a,text:entry.text,author:a.author||entry.author||''};await storeOffline(copy);savedArticles[a.url]=copy}
+for(const a of missing){const entry=articleCatalog?.[a.url];if(!entry?.text||entry.text.length<500)continue;const copy={...a,text:entry.text,author:a.author||entry.author||''};await storeOffline(copy);savedArticles[a.url]=copy}
 render()}
 label(missing.some(a=>!savedArticles[a.url])?'PARTIAL':'SYNCED');
 }catch(e){label('SYNC ERROR');console.warn('-30- sync',e)}finally{working=false}}
