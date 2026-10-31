@@ -149,6 +149,22 @@ body>header.is-scrolled #filter-tray{margin-top:7px}
 .source-mark[data-source="The Art Newspaper"]{background:#165b72;color:#fff}
 .source-mark[data-source="Hyperallergic"]{background:#ef7635;color:#111}
 .source-mark[data-source="ARTnews"]{background:#7d9340;color:#111}
+
+/* Larger newsprint photographs: no frame, edges dissolve as discrete ink dropout. */
+.story .story-image{flex:0 0 108px;width:108px;overflow:hidden;background:#fff;border:0;border-radius:0}
+.story .stamp,.story.featured .stamp{display:block;width:108px;height:108px;max-height:none;border:0;border-radius:0;object-fit:cover}
+.story.featured .story-image{flex-basis:132px;width:132px}
+.story.featured .stamp{width:132px;height:132px}
+@media(min-width:640px){
+ .story .story-image{flex-basis:124px;width:124px}
+ .story .stamp{width:124px;height:124px}
+ .story.featured .story-image{flex-basis:148px;width:148px}
+ .story.featured .stamp{width:148px;height:148px}
+}
+/* The SVG mask uses crisp, individually distributed dots—not a blur or gradient. */
+.story .story-image::before{content:"";position:absolute;inset:0;background:#fff;pointer-events:none;z-index:2;
+ -webkit-mask-image:var(--newsprint-edge-mask);mask-image:var(--newsprint-edge-mask);
+ -webkit-mask-size:100% 100%;mask-size:100% 100%}
 </style></head><body><div id="reader-backdrop" hidden onclick="closeOffline()"></div><section id="offline-reader" hidden role="dialog" aria-modal="true" aria-label="Article reader"><div class="reader-toolbar"><button class="reader-close" onclick="closeOffline()" aria-label="Close article">×</button><span class="reader-wordmark">-30-</span><a class="reader-original" target="_blank" rel="noopener noreferrer" aria-label="Open original article" href="#">↗ Original</a></div><div class="reader-content"><div class="reader-source"></div><h1 class="reader-title"></h1><div class="reader-byline" hidden></div><div class="reader-hero" hidden><img class="reader-img" alt="" referrerpolicy="no-referrer"></div><div class="reader-text"></div><div class="reader-fallback" hidden><p>Full article text isn’t available in -30- yet.</p><div class="reader-actions"><a class="reader-publisher" target="_blank" rel="noopener noreferrer">Original article ↗</a><a class="reader-archive" target="_blank" rel="noopener noreferrer">Check Archive.is ↗</a></div></div></div></section><div id="pull-indicator" role="status" aria-live="polite">↓ Pull to refresh</div><header><div class="brand">-30-</div><details id="filter-tray"><summary aria-label="Expand or collapse feed filters"><span class="tray-icon" aria-hidden="true">☷</span><span class="tray-summary" id="tray-summary">All • All topics • All sources</span><span class="tray-chevron" aria-hidden="true">⌄</span></summary><nav id="nav" aria-label="Feed, section, and source filters"></nav></details></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
 const sections=['All','Top Stories','Saved'];const topics=['World','U.S.','Politics','New York','Business','Technology','Science','Health','Arts','Books','Movies','Opinion'];const publications=[['All sources',''],['NYT','NYT'],['Guardian','The Guardian US'],['Intercept','The Intercept'],['Nation','The Nation'],['Jacobin','Jacobin'],['ProPublica','ProPublica'],['In These Times','In These Times'],['Al Jazeera','Al Jazeera'],['taz','taz'],['Mediapart','Mediapart'],['L’Humanité','L’Humanité'],['Le Monde diplo','Le Monde diplomatique'],['Apache','Apache'],['Médor','Médor'],['nd','nd'],['Middle East Eye','Middle East Eye'],['+972','+972 Magazine'],['Africa Is a Country','Africa Is a Country'],['Brasil de Fato','Brasil de Fato'],['Gothamist','Gothamist'],['THE CITY','THE CITY'],['Hell Gate','Hell Gate'],['City Limits','City Limits'],['Streetsblog','Streetsblog NYC'],['Artforum','Artforum'],['Artnet News','Artnet News'],['The Art Newspaper','The Art Newspaper'],['Hyperallergic','Hyperallergic'],['ARTnews','ARTnews']];const languages=[['All languages',''],['English','en'],['French','fr'],['German','de'],['Dutch','nl'],['Portuguese','pt']];const sourceLanguages={'NYT':'en','The Guardian US':'en','The Intercept':'en','The Nation':'en','Jacobin':'en','ProPublica':'en','In These Times':'en','Al Jazeera':'en','taz':'de','Mediapart':'fr','L’Humanité':'fr','Le Monde diplomatique':'en','Apache':'nl','Médor':'fr','nd':'de','Middle East Eye':'en','+972 Magazine':'en','Africa Is a Country':'en','Brasil de Fato':'pt','Gothamist':'en','THE CITY':'en','Hell Gate':'en','City Limits':'en','Streetsblog NYC':'en','Artforum':'en','Artnet News':'en','The Art Newspaper':'en','Hyperallergic':'en','ARTnews':'en'};let selectedTopic='';let selectedSource='';let selectedLanguage='';
 let data={sections:{}};let selected='All';let savedArticles={};try{savedArticles=JSON.parse(localStorage.getItem('thirty-saved')||'{}')||{}}catch(e){savedArticles={}}const marks={'NYT':'NYT','The Guardian US':'G','The Intercept':'I','The Nation':'N','Jacobin':'J','ProPublica':'P','In These Times':'ITT','Al Jazeera':'AJ','taz':'taz','Mediapart':'M','L’Humanité':'H','Le Monde diplomatique':'LMD','Apache':'A','Médor':'MÉ','nd':'nd','Middle East Eye':'MEE','+972 Magazine':'+972','Africa Is a Country':'AIC','Brasil de Fato':'BdF','Gothamist':'GTH','THE CITY':'CITY','Hell Gate':'HG','City Limits':'CL','Streetsblog NYC':'SB','Artforum':'AF','Artnet News':'AN','The Art Newspaper':'TAN','Hyperallergic':'HA','ARTnews':'ART'};
@@ -431,5 +447,23 @@ async function connect(secret){context=await derive(secret);sessionStorage.setIt
 btn.onclick=()=>{if(context)return sync();const secret=prompt('Enter your existing Serving / Rat Race sync key');if(secret)connect(secret.trim())};
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&context)sync()});
 const secret=sessionStorage.getItem(SECRET);if(secret)setTimeout(()=>connect(secret).catch(()=>label('SYNC ERROR')),1200);
+})();
+
+/* A reproducible stipple mask: paper-colored pixels replace ink with increasing
+   probability toward the edges, creating a true dot-density vignette. */
+(function(){
+ let seed=81729;
+ const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ const size=128,step=2,shapes=[];
+ for(let y=0;y<size;y+=step)for(let x=0;x<size;x+=step){
+   const dx=(x+step/2-size/2)/(size/2),dy=(y+step/2-size/2)/(size/2);
+   const radius=Math.sqrt(dx*dx+dy*dy),t=Math.max(0,Math.min(1,(radius-.43)/.57));
+   if(rand()<Math.pow(t,1.4)){
+     const r=0.5+rand()*.48;
+     shapes.push('<circle cx="'+(x+1)+'" cy="'+(y+1)+'" r="'+r.toFixed(2)+'" fill="white"/>');
+   }
+ }
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128"><rect width="128" height="128" fill="black"/>'+shapes.join('')+'</svg>';
+ document.documentElement.style.setProperty('--newsprint-edge-mask','url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
 })();
 </script></body></html>
