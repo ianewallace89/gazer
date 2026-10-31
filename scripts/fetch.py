@@ -39,7 +39,7 @@ EXTRA = {
 "Streetsblog NYC":"https://nyc.streetsblog.org/feed",
 "Artforum":"https://www.artforum.com/feed",
 "Artnet News":"https://news.artnet.com/feed/",
-"The Art Newspaper":"https://www.theartnewspaper.com/rss",
+"The Art Newspaper":"https://www.theartnewspaper.com/rss.xml",
 "Hyperallergic":"https://hyperallergic.com/feed/",
 "ARTnews":"https://www.artnews.com/feed/"
 }
