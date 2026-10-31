@@ -1,4 +1,4 @@
-import json,re,html,pathlib,urllib.request,urllib.parse,concurrent.futures
+import json,re,html,pathlib,urllib.request,urllib.parse,concurrent.futures,datetime
 from html.parser import HTMLParser
 class Metadata(HTMLParser):
  def __init__(self):super().__init__();self.author=""
@@ -18,7 +18,7 @@ class Reader(HTMLParser):
  def handle_endtag(self,tag):
   if tag=='p' and self.active:
    t=' '.join(''.join(self.current).split())
-   if len(t)>75 and not re.search(r'cookie policy|subscribe to|sign up for|all rights reserved',t,re.I):self.parts.append(t)
+   if len(t)>45 and not re.search(r'cookie policy|subscribe to|sign up for|all rights reserved',t,re.I):self.parts.append(t)
    self.active=False
   if tag in ('script','style','nav','footer','header','aside') and self.depth:self.depth-=1
  def handle_data(self,data):
@@ -28,8 +28,13 @@ try: existing=json.loads(path.read_text())
 except: existing={}
 feeds=json.loads(pathlib.Path('headlines.json').read_text())['sections']
 items={a['url']:a for arr in feeds.values() for a in arr if a.get('url') and a.get('source')!='NYT'}
-# Keep previously extracted articles and only fetch a limited number each run.
-todo=[a for u,a in items.items() if u not in existing][:24]
+# Spread attempts across the entire outstanding feed, rather than getting stuck
+# on the same first 24 URLs whose publishers block extraction.
+pending=[a for u,a in items.items() if u not in existing]
+batch_size=48
+slot=int(datetime.datetime.now(datetime.timezone.utc).timestamp()//900)
+start=(slot*batch_size)%len(pending) if pending else 0
+todo=(pending[start:]+pending[:start])[:batch_size]
 def fetch(a):
  try:
   req=urllib.request.Request(a['url'],headers={'User-Agent':'Mozilla/5.0 (compatible; ThirtyOfflineReader/1.0)'})
@@ -42,7 +47,7 @@ def fetch(a):
   for p in parser.parts:
    if p not in seen:parts.append(p);seen.add(p)
   content='\n\n'.join(parts)
-  if len(content)<1600 or len(parts)<5:return None
+  if len(content)<500 or len(parts)<2:return None
   return a['url'],{'title':a['title'],'source':a.get('source'),'author':a.get('author') or metadata.author,'text':content[:90000]}
  except Exception:return None
 with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
@@ -55,4 +60,4 @@ for url,article in existing.items():
 # Limit total published file size and preserve newer saves.
 if len(existing)>400:existing=dict(list(existing.items())[-400:])
 path.write_text(json.dumps(existing,ensure_ascii=False))
-print('Offline readable:',len(existing),'new attempts:',len(todo))
+print('Offline readable:',len(existing),'attempted:',len(todo),'outstanding:',len(pending))
