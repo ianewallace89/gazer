@@ -161,7 +161,8 @@ body>header.is-scrolled #filter-tray{margin-top:7px}
  .story.featured .story-image{flex-basis:148px;width:148px}
  .story.featured .stamp{width:148px;height:148px}
 }
-/* The SVG mask uses crisp, individually distributed dots—not a blur or gradient. */
+/* Transparent-background SVG mask: only the white ink-dropout dots are opaque. */
+.story .story-image::after{display:none}
 .story .story-image::before{content:"";position:absolute;inset:0;background:#fff;pointer-events:none;z-index:2;
  -webkit-mask-image:var(--newsprint-edge-mask);mask-image:var(--newsprint-edge-mask);
  -webkit-mask-size:100% 100%;mask-size:100% 100%}
@@ -463,7 +464,7 @@ const secret=sessionStorage.getItem(SECRET);if(secret)setTimeout(()=>connect(sec
      shapes.push('<circle cx="'+(x+1)+'" cy="'+(y+1)+'" r="'+r.toFixed(2)+'" fill="white"/>');
    }
  }
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128"><rect width="128" height="128" fill="black"/>'+shapes.join('')+'</svg>';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">'+shapes.join('')+'</svg>';
  document.documentElement.style.setProperty('--newsprint-edge-mask','url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
 })();
 </script></body></html>
