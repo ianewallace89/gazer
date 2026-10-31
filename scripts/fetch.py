@@ -30,7 +30,18 @@ EXTRA = {
 "Middle East Eye":"https://www.middleeasteye.net/rss",
 "+972 Magazine":"https://www.972mag.com/feed/",
 "Africa Is a Country":"https://africasacountry.com/feed/",
-"Brasil de Fato":"https://www.brasildefato.com.br/feed/"
+"Brasil de Fato":"https://www.brasildefato.com.br/feed/",
+"Gothamist":"https://gothamist.com/feed",
+"THE CITY":"https://www.thecity.nyc/rss/index.xml",
+"Hell Gate":"https://hellgatenyc.com/all-posts/rss",
+"City Limits":"https://citylimits.org/feed",
+"Brooklyn Eagle":"https://brooklyneagle.com/feed/",
+"Streetsblog NYC":"https://nyc.streetsblog.org/feed",
+"Artforum":"https://www.artforum.com/feed",
+"Artnet News":"https://news.artnet.com/feed/",
+"The Art Newspaper":"https://www.theartnewspaper.com/rss",
+"Hyperallergic":"https://hyperallergic.com/feed/",
+"ARTnews":"https://www.artnews.com/feed/"
 }
 def author_name(item):
     names=[]
