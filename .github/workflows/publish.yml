@@ -7,6 +7,9 @@ on:
     branches: [main]
     paths-ignore:
       - 'headlines.json'
+      - 'articles.json'
+      - 'signals.json'
+      - 'extraction-status.json'
 permissions:
   contents: write
   pages: write
@@ -44,12 +47,14 @@ jobs:
           cp headlines.json /tmp/gazer-headlines.json
           cp articles.json /tmp/gazer-articles.json
           cp signals.json /tmp/gazer-signals.json
+          cp extraction-status.json /tmp/gazer-extraction-status.json
           git fetch origin main
           git checkout -B main origin/main
           cp /tmp/gazer-headlines.json headlines.json
           cp /tmp/gazer-articles.json articles.json
           cp /tmp/gazer-signals.json signals.json
-          git add headlines.json articles.json signals.json
+          cp /tmp/gazer-extraction-status.json extraction-status.json
+          git add headlines.json articles.json signals.json extraction-status.json
           if ! git diff --cached --quiet; then
             git commit -m "Refresh headlines"
             git push origin HEAD:main
