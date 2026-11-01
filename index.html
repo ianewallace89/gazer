@@ -239,6 +239,19 @@ body>header.is-scrolled #filter-tray{margin-top:7px}
  .front-page .paper-module .story h2{font-size:clamp(18px,5.1vw,23px)}
  .front-page .paper-module .story p{font-size:13px}
 }
+
+/* Front-page copy should use available column space, never an arbitrary line clamp. */
+.front-page .paper-module .story p,
+.front-page .paper-module .paper-brief p,
+.front-page .paper-module .story:nth-of-type(n+6) p{
+ display:block!important;
+ overflow:visible!important;
+ -webkit-line-clamp:unset!important;
+ -webkit-box-orient:initial!important;
+ max-height:none!important;
+}
+.front-page .paper-stack .story{flex:0 0 auto}
+.front-page .paper-module .story-body{height:auto}
 </style></head><body><div id="reader-backdrop" hidden onclick="closeOffline()"></div><section id="offline-reader" hidden role="dialog" aria-modal="true" aria-label="Article reader"><div class="reader-toolbar"><button class="reader-close" onclick="closeOffline()" aria-label="Close article">×</button><span class="reader-wordmark">-30-</span><a class="reader-original" target="_blank" rel="noopener noreferrer" aria-label="Open original article" href="#">↗ Original</a></div><div class="reader-content"><div class="reader-source"></div><h1 class="reader-title"></h1><div class="reader-byline" hidden></div><div class="reader-hero" hidden><img class="reader-img" alt="" referrerpolicy="no-referrer"></div><div class="reader-text"></div><div class="reader-fallback" hidden><p>Full article text isn’t available in -30- yet.</p><div class="reader-actions"><a class="reader-publisher" target="_blank" rel="noopener noreferrer">Original article ↗</a><a class="reader-archive" target="_blank" rel="noopener noreferrer">Check Archive.is ↗</a></div></div></div></section><div id="pull-indicator" role="status" aria-live="polite">↓ Pull to refresh</div><header><div class="brand">-30-</div><details id="filter-tray"><summary aria-label="Expand or collapse feed filters"><span class="tray-icon" aria-hidden="true">☷</span><span class="tray-summary" id="tray-summary">All • All topics • All sources</span><span class="tray-chevron" aria-hidden="true">⌄</span></summary><nav id="nav" aria-label="Feed, section, and source filters"></nav></details></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
 const sections=['Front Page','Top Stories','All','Saved'];const topics=['World','U.S.','Politics','New York','Business','Technology','Science','Health','Arts','Books','Movies','Opinion'];const publications=[['All sources',''],['NYT','NYT'],['Guardian','The Guardian US'],['Intercept','The Intercept'],['Nation','The Nation'],['Jacobin','Jacobin'],['ProPublica','ProPublica'],['In These Times','In These Times'],['Al Jazeera','Al Jazeera'],['taz','taz'],['Mediapart','Mediapart'],['L’Humanité','L’Humanité'],['Le Monde diplo','Le Monde diplomatique'],['Apache','Apache'],['Médor','Médor'],['nd','nd'],['Middle East Eye','Middle East Eye'],['+972','+972 Magazine'],['Africa Is a Country','Africa Is a Country'],['Brasil de Fato','Brasil de Fato'],['Gothamist','Gothamist'],['THE CITY','THE CITY'],['Hell Gate','Hell Gate'],['City Limits','City Limits'],['Streetsblog','Streetsblog NYC'],['Artforum','Artforum'],['Artnet News','Artnet News'],['The Art Newspaper','The Art Newspaper'],['Hyperallergic','Hyperallergic'],['ARTnews','ARTnews']];const languages=[['All languages',''],['English','en'],['French','fr'],['German','de'],['Dutch','nl'],['Portuguese','pt']];const sourceLanguages={'NYT':'en','The Guardian US':'en','The Intercept':'en','The Nation':'en','Jacobin':'en','ProPublica':'en','In These Times':'en','Al Jazeera':'en','taz':'de','Mediapart':'fr','L’Humanité':'fr','Le Monde diplomatique':'en','Apache':'nl','Médor':'fr','nd':'de','Middle East Eye':'en','+972 Magazine':'en','Africa Is a Country':'en','Brasil de Fato':'pt','Gothamist':'en','THE CITY':'en','Hell Gate':'en','City Limits':'en','Streetsblog NYC':'en','Artforum':'en','Artnet News':'en','The Art Newspaper':'en','Hyperallergic':'en','ARTnews':'en'};let selectedTopic='';let selectedSource='';let selectedLanguage='';
 let data={sections:{}};let selected='Front Page';let savedArticles={};try{savedArticles=JSON.parse(localStorage.getItem('thirty-saved')||'{}')||{}}catch(e){savedArticles={}}const marks={'NYT':'NYT','The Guardian US':'G','The Intercept':'I','The Nation':'N','Jacobin':'J','ProPublica':'P','In These Times':'ITT','Al Jazeera':'AJ','taz':'taz','Mediapart':'M','L’Humanité':'H','Le Monde diplomatique':'LMD','Apache':'A','Médor':'MÉ','nd':'nd','Middle East Eye':'MEE','+972 Magazine':'+972','Africa Is a Country':'AIC','Brasil de Fato':'BdF','Gothamist':'GTH','THE CITY':'CITY','Hell Gate':'HG','City Limits':'CL','Streetsblog NYC':'SB','Artforum':'AF','Artnet News':'AN','The Art Newspaper':'TAN','Hyperallergic':'HA','ARTnews':'ART'};
@@ -554,6 +567,9 @@ function composeFrontPage(){
  const flush=()=>{
   while(buffer.length){
    if(first){add('lead',[buffer.shift()]);first=false;continue}
+   if(buffer.length>=3 && !buffer[0].querySelector('.story-image')){
+    add('pair',buffer.splice(0,2));continue;
+   }
    if(buffer.length>=3){
     const trio=buffer.splice(0,3),module=create('feature');
     trio[0].classList.remove('paper-brief');
