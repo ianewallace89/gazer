@@ -11,12 +11,20 @@ import json
 import pathlib
 import re
 import urllib.request
+import urllib.parse
+import urllib.error
+import time
 from html.parser import HTMLParser
 
 import trafilatura
 
 ROOT = pathlib.Path(".")
 catalog = ROOT / "articles.json"
+status_path = ROOT / "extraction-status.json"
+try:
+    statuses = json.loads(status_path.read_text())
+except (OSError, ValueError):
+    statuses = {}
 try:
     existing = json.loads(catalog.read_text())
 except (OSError, ValueError):
@@ -77,7 +85,7 @@ def get_text(raw):
         ) or ""
     except Exception:
         body = ""
-    if len(body.strip()) >= 450:
+    if len(body.strip()) >= 300:
         return body.strip(), "trafilatura"
     parser = Paragraphs()
     try:
@@ -85,7 +93,7 @@ def get_text(raw):
     except Exception:
         pass
     fallback = "\n\n".join(dict.fromkeys(parser.parts))
-    if len(fallback) >= 500 and len(parser.parts) >= 3:
+    if len(fallback) >= 350 and len(parser.parts) >= 2:
         return fallback, "paragraphs"
     return "", "insufficient_text"
 
@@ -101,7 +109,7 @@ def fetch(a):
                 return url, None, "non_html"
             raw = res.read(1100000).decode("utf-8", "replace")
         text, method = get_text(raw)
-        if len(text) < 450:
+        if len(text) < 300:
             return url, None, method
         return url, {
             "title": a.get("title", ""),
@@ -112,26 +120,39 @@ def fetch(a):
     except Exception as error:
         return url, None, type(error).__name__
 
-# Prioritize new articles, then circulate through older failures so that a
-# few inaccessible publishers cannot monopolize extraction capacity.
-batch_size = 100
-priority_count = min(25, len(pending))
-recent = pending[:priority_count]
-older = pending[priority_count:]
-slot = int(datetime.datetime.now(datetime.timezone.utc).timestamp() // 900)
-offset = (slot * (batch_size - priority_count)) % len(older) if older else 0
-todo = (recent + (older[offset:] + older[:offset])[:batch_size-priority_count])
+# Persistent per-URL retry state avoids exhausting each run on the same failures.
+# Refresh batches cover sources fairly, rather than biasing toward RSS order.
+now = int(time.time())
+eligible = [a for a in pending if statuses.get(a["url"], {}).get("retry_after", 0) <= now]
+by_source = {}
+for a in eligible:
+    by_source.setdefault(a.get("source", ""), []).append(a)
+for group in by_source.values():
+    group.sort(key=publication_time, reverse=True)
+todo = []
+while by_source and len(todo) < 120:
+    for source in list(by_source):
+        if by_source[source]:
+            todo.append(by_source[source].pop(0))
+        if not by_source[source]:
+            del by_source[source]
+        if len(todo) >= 120:
+            break
 
 outcomes = {}
 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
     for url, article, method in pool.map(fetch, todo):
-        if "news.artnet.com/" in url:
-            print("ARTNET extraction:", method, "chars:", len(article.get("text", "")) if article else 0, url, flush=True)
-        if "french-dealers-art-basel-paris-letter-2830082" in url:
-            print("TARGET ARTICLE:", method, "readable:", bool(article), url, flush=True)
         outcomes[method] = outcomes.get(method, 0) + 1
         if article:
             existing[url] = article
+            statuses[url] = {"status": "ready", "method": method, "updated": now}
+        else:
+            old = statuses.get(url, {})
+            attempts = old.get("attempts", 0) + 1
+            # Retry transient failures more quickly, slow down persistent failures.
+            delay = min(86400, 900 * 2 ** min(attempts - 1, 7))
+            statuses[url] = {"status": method, "attempts": attempts,
+                             "updated": now, "retry_after": now + delay}
 
 for url, article in existing.items():
     feed = items.get(url)
@@ -146,5 +167,8 @@ if len(existing) > 1400:
     existing = dict((archived[-max(0, 1400-len(active)):] if len(active) < 1400 else []) + list(active.items()))
 
 catalog.write_text(json.dumps(existing, ensure_ascii=False))
+# Keep diagnostics bounded to currently known URLs, including successful ones.
+statuses = {u: v for u, v in statuses.items() if u in items}
+status_path.write_text(json.dumps(statuses, ensure_ascii=False))
 print("Readable articles:", len(existing), "attempted:", len(todo),
-      "pending:", len(pending), "extraction outcomes:", outcomes, flush=True)
+      "pending:", len(pending), "eligible:", len(eligible), "extraction outcomes:", outcomes, flush=True)
