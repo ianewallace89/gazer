@@ -5,6 +5,7 @@ misrepresent a blocked or truncated article as complete.
 """
 import concurrent.futures
 import datetime
+from email.utils import parsedate_to_datetime
 import html
 import json
 import pathlib
@@ -30,7 +31,15 @@ for articles in sections.values():
         if url.startswith("https://") and item.get("source") != "NYT":
             items[url] = item
 pending = [a for url, a in items.items() if not existing.get(url, {}).get("text")]
-pending.sort(key=lambda a: a.get("date") or "", reverse=True)
+def publication_time(a):
+    try:
+        return parsedate_to_datetime(a.get("date") or "").timestamp()
+    except Exception:
+        try:
+            return datetime.datetime.fromisoformat(a.get("date") or "").timestamp()
+        except Exception:
+            return 0
+pending.sort(key=publication_time, reverse=True)
 
 class Paragraphs(HTMLParser):
     def __init__(self):
@@ -106,7 +115,7 @@ def fetch(a):
 # Prioritize new articles, then circulate through older failures so that a
 # few inaccessible publishers cannot monopolize extraction capacity.
 batch_size = 100
-priority_count = min(65, len(pending))
+priority_count = min(25, len(pending))
 recent = pending[:priority_count]
 older = pending[priority_count:]
 slot = int(datetime.datetime.now(datetime.timezone.utc).timestamp() // 900)
@@ -116,6 +125,10 @@ todo = (recent + (older[offset:] + older[:offset])[:batch_size-priority_count])
 outcomes = {}
 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
     for url, article, method in pool.map(fetch, todo):
+        if "news.artnet.com/" in url:
+            print("ARTNET extraction:", method, "chars:", len(article.get("text", "")) if article else 0, url, flush=True)
+        if "french-dealers-art-basel-paris-letter-2830082" in url:
+            print("TARGET ARTICLE:", method, "readable:", bool(article), url, flush=True)
         outcomes[method] = outcomes.get(method, 0) + 1
         if article:
             existing[url] = article
