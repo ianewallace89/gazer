@@ -75,6 +75,32 @@ class Paragraphs(HTMLParser):
         if self.in_p and not self.blocked:
             self.chunk.append(data)
 
+def structured_article_text(raw):
+    """Extract schema.org articleBody when publishers expose it in JSON-LD."""
+    scripts = re.findall(
+        r'<script[^>]+type=["\\\']application/ld\\+json["\\\'][^>]*>(.*?)</script>',
+        raw, flags=re.I | re.S
+    )
+    def walk(value):
+        if isinstance(value, list):
+            for item in value:
+                yield from walk(item)
+        elif isinstance(value, dict):
+            body = value.get("articleBody")
+            if isinstance(body, str) and len(body.strip()) >= 300:
+                yield html.unescape(re.sub(r"<[^>]*>", " ", body)).strip()
+            for key in ("@graph", "mainEntity", "article", "itemListElement"):
+                if key in value:
+                    yield from walk(value[key])
+    for script in scripts:
+        try:
+            for candidate in walk(json.loads(html.unescape(script))):
+                if len(candidate) >= 300:
+                    return candidate
+        except (ValueError, TypeError):
+            pass
+    return ""
+
 def get_text(raw):
     # Trafilatura identifies the actual article body, excluding navigation,
     # related stories, and subscription prompts far more reliably than <p> tags.
@@ -87,6 +113,9 @@ def get_text(raw):
         body = ""
     if len(body.strip()) >= 300:
         return body.strip(), "trafilatura"
+    structured = structured_article_text(raw)
+    if len(structured) >= 300:
+        return structured, "jsonld"
     parser = Paragraphs()
     try:
         parser.feed(raw)
