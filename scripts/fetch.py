@@ -165,6 +165,9 @@ for source,feed_url in EXTRA.items():
         sections[source]=json_feed_fallback(source,feed_url)
     if not sections[source] and source in ("nd","+972 Magazine","Africa Is a Country","The Guardian Cartoons","The New Yorker Cartoons"):
         sections[source]=json_feed_fallback(source,feed_url)
+from magazines import magazine_feeds
+for name, stories in magazine_feeds().items():
+    sections[name]=mark_photos(stories)
 path=pathlib.Path("headlines.json")
 if path.exists():
     try:
