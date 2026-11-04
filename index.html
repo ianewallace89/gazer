@@ -270,11 +270,11 @@ body>header.is-scrolled #filter-tray{margin-top:7px}
 
 #news-loader{position:fixed;inset:0;z-index:900;background:#004170;display:grid;place-items:center;transition:opacity .28s ease;pointer-events:auto}
 #news-loader.is-hidden{opacity:0;pointer-events:none}
-#news-loader .loader-icon{width:min(58vw,240px);aspect-ratio:1;position:relative;background:#004170}
-#news-loader img{display:block;width:100%;height:100%;mix-blend-mode:darken;clip-path:inset(0 round 27%)}
+#news-loader .loader-icon{width:min(58vw,240px);aspect-ratio:1;position:relative;background:#004170;overflow:hidden;border-radius:36%}
+#news-loader img{display:block;width:100%;height:100%;mix-blend-mode:darken}
 #news-loader svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-#news-loader .pupils{animation:news-eye-scan 1s steps(1,end) infinite!important;transform-box:view-box;transform-origin:0 0}
-#news-loader .blink{animation:news-eye-blink 7.3s infinite;transform-box:fill-box;transform-origin:center}
+#news-loader .pupils{animation:none!important;transform-origin:0 0}
+#news-loader .blink{animation:none!important}
 @keyframes news-eye-scan{0%,100%{transform:translateX(-5px)}25%{transform:translateX(5px)}50%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 @keyframes news-eye-blink{0%,46%,49%,100%{transform:scaleY(1)}47.5%{transform:scaleY(.08)}}
 
@@ -613,4 +613,4 @@ function composeFrontPage(){
  }
  flush();
 }
-</script><script>(function(){const eyes=document.querySelector('#news-loader .pupils');if(!eyes)return;let n=0;setInterval(()=>{if(document.getElementById('news-loader')?.classList.contains('is-hidden'))return;eyes.style.transform='translateX('+([-6,6,-5,6][n++%4])+'px)'},220)})();</script></body></html>
+</script><script>(function(){const eyes=document.querySelector('#news-loader .pupils');if(!eyes)return;let n=0;setInterval(()=>{if(document.getElementById('news-loader')?.classList.contains('is-hidden'))return;eyes.setAttribute('transform','translate('+([-6,6,-5,6][n++%4])+' 0)')},220)})();</script></body></html>
