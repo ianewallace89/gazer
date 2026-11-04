@@ -271,14 +271,14 @@ body>header.is-scrolled #filter-tray{margin-top:7px}
 #news-loader{position:fixed;inset:0;z-index:900;background:#004170;display:grid;place-items:center;transition:opacity .28s ease;pointer-events:auto}
 #news-loader.is-hidden{opacity:0;pointer-events:none}
 #news-loader .loader-icon{width:min(58vw,240px);aspect-ratio:1;position:relative}
-#news-loader img{display:block;width:100%;height:100%;-webkit-mask-image:radial-gradient(circle,black 57%,transparent 72%);mask-image:radial-gradient(circle,black 57%,transparent 72%)}
+#news-loader img{display:none}#news-loader canvas{display:block;width:100%;height:100%}
 #news-loader svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 #news-loader .pupils{animation:news-eye-scan 1.35s infinite linear;transform-box:fill-box;transform-origin:center}
 #news-loader .blink{animation:news-eye-blink 7.3s infinite;transform-box:fill-box;transform-origin:center}
 @keyframes news-eye-scan{0%,9%,100%{transform:translateX(0)}10%,24%{transform:translateX(-5px)}25%,39%{transform:translateX(5px)}40%,54%{transform:translateX(-4px)}55%,69%{transform:translateX(5px)}70%,84%{transform:translateX(-5px)}85%,96%{transform:translateX(4px)}}
 @keyframes news-eye-blink{0%,46%,49%,100%{transform:scaleY(1)}47.5%{transform:scaleY(.08)}}
-@media(prefers-reduced-motion:reduce){#news-loader .pupils,#news-loader .blink{animation:none}}
-</style></head><body><div id="news-loader" role="status" aria-label="Loading headlines"><div class="loader-icon"><img src="assets/app-icon.png" alt=""><svg viewBox="0 0 180 180" aria-hidden="true"><g class="blink"><ellipse cx="78" cy="44" rx="8.5" ry="13" fill="#fff8e8" stroke="#151515" stroke-width="1.5"/><ellipse cx="98" cy="43" rx="9" ry="13" fill="#fff8e8" stroke="#151515" stroke-width="1.5"/><g class="pupils" fill="#171717"><ellipse cx="80" cy="47" rx="3.4" ry="6.2"/><ellipse cx="100" cy="46" rx="3.4" ry="6.2"/></g></g></svg></div></div><div id="reader-backdrop" hidden onclick="closeOffline()"></div><section id="offline-reader" hidden role="dialog" aria-modal="true" aria-label="Article reader"><div class="reader-toolbar"><button class="reader-close" onclick="closeOffline()" aria-label="Close article">×</button><span class="reader-wordmark">-30-</span><a class="reader-original" target="_blank" rel="noopener noreferrer" aria-label="Open original article" href="#">↗ Original</a></div><div class="reader-content"><div class="reader-source"></div><h1 class="reader-title"></h1><div class="reader-byline" hidden></div><div class="reader-hero" hidden><img class="reader-img" alt="" referrerpolicy="no-referrer"></div><div class="reader-text"></div><div class="reader-fallback" hidden><p>Full article text isn’t available in -30- yet.</p><div class="reader-actions"><a class="reader-publisher" target="_blank" rel="noopener noreferrer">Original article ↗</a><a class="reader-archive" target="_blank" rel="noopener noreferrer">Check Archive.is ↗</a></div></div></div></section><div id="pull-indicator" role="status" aria-live="polite">↓ Pull to refresh</div><header><div class="brand">-30-</div><details id="filter-tray"><summary aria-label="Expand or collapse feed filters"><span class="tray-icon" aria-hidden="true">☷</span><span class="tray-summary" id="tray-summary">All • All topics • All sources</span><span class="tray-chevron" aria-hidden="true">⌄</span></summary><nav id="nav" aria-label="Feed, section, and source filters"></nav></details></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
+
+</style></head><body><div id="news-loader" role="status" aria-label="Loading headlines"><div class="loader-icon"><canvas id="news-loader-canvas" width="360" height="360" aria-hidden="true"></canvas></div></div><div id="reader-backdrop" hidden onclick="closeOffline()"></div><section id="offline-reader" hidden role="dialog" aria-modal="true" aria-label="Article reader"><div class="reader-toolbar"><button class="reader-close" onclick="closeOffline()" aria-label="Close article">×</button><span class="reader-wordmark">-30-</span><a class="reader-original" target="_blank" rel="noopener noreferrer" aria-label="Open original article" href="#">↗ Original</a></div><div class="reader-content"><div class="reader-source"></div><h1 class="reader-title"></h1><div class="reader-byline" hidden></div><div class="reader-hero" hidden><img class="reader-img" alt="" referrerpolicy="no-referrer"></div><div class="reader-text"></div><div class="reader-fallback" hidden><p>Full article text isn’t available in -30- yet.</p><div class="reader-actions"><a class="reader-publisher" target="_blank" rel="noopener noreferrer">Original article ↗</a><a class="reader-archive" target="_blank" rel="noopener noreferrer">Check Archive.is ↗</a></div></div></div></section><div id="pull-indicator" role="status" aria-live="polite">↓ Pull to refresh</div><header><div class="brand">-30-</div><details id="filter-tray"><summary aria-label="Expand or collapse feed filters"><span class="tray-icon" aria-hidden="true">☷</span><span class="tray-summary" id="tray-summary">All • All topics • All sources</span><span class="tray-chevron" aria-hidden="true">⌄</span></summary><nav id="nav" aria-label="Feed, section, and source filters"></nav></details></header><main><div class="section" id="section">Top Stories</div><div id="stories"><p class="empty">Loading headlines…</p></div><div class="foot">An independent news reader linking to original reporting from multiple publications. Not affiliated with the publishers. Archived versions may not exist for every article.</div></main><script>
 const sections=['Front Page','Top Stories','All','Saved'];const topics=['World','U.S.','Politics','New York','Business','Technology','Science','Health','Arts','Books','Movies','Opinion'];const publications=[['All sources',''],['NYT','NYT'],['Guardian','The Guardian US'],['Intercept','The Intercept'],['Nation','The Nation'],['Jacobin','Jacobin'],['ProPublica','ProPublica'],['In These Times','In These Times'],['Al Jazeera','Al Jazeera'],['taz','taz'],['Mediapart','Mediapart'],['L’Humanité','L’Humanité'],['Le Monde diplo','Le Monde diplomatique'],['Apache','Apache'],['Médor','Médor'],['nd','nd'],['Middle East Eye','Middle East Eye'],['+972','+972 Magazine'],['Africa Is a Country','Africa Is a Country'],['Brasil de Fato','Brasil de Fato'],['Gothamist','Gothamist'],['THE CITY','THE CITY'],['Hell Gate','Hell Gate'],['City Limits','City Limits'],['Streetsblog','Streetsblog NYC'],['Artforum','Artforum'],['Artnet News','Artnet News'],['The Art Newspaper','The Art Newspaper'],['Hyperallergic','Hyperallergic'],['ARTnews','ARTnews'],['Equator','Equator'],['Tablet','Tablet']];const languages=[['All languages',''],['English','en'],['French','fr'],['German','de'],['Dutch','nl'],['Portuguese','pt']];const sourceLanguages={'NYT':'en','The Guardian US':'en','The Intercept':'en','The Nation':'en','Jacobin':'en','ProPublica':'en','In These Times':'en','Al Jazeera':'en','taz':'de','Mediapart':'fr','L’Humanité':'fr','Le Monde diplomatique':'en','Apache':'nl','Médor':'fr','nd':'de','Middle East Eye':'en','+972 Magazine':'en','Africa Is a Country':'en','Brasil de Fato':'pt','Gothamist':'en','THE CITY':'en','Hell Gate':'en','City Limits':'en','Streetsblog NYC':'en','Artforum':'en','Artnet News':'en','The Art Newspaper':'en','Hyperallergic':'en','ARTnews':'en','Equator':'en','Tablet':'en'};let selectedTopic='';let selectedSource='';let selectedLanguage='';
 let data={sections:{}};let selected='Front Page';let savedArticles={};try{savedArticles=JSON.parse(localStorage.getItem('thirty-saved')||'{}')||{}}catch(e){savedArticles={}}const marks={'NYT':'NYT','The Guardian US':'G','The Intercept':'I','The Nation':'N','Jacobin':'J','ProPublica':'P','In These Times':'ITT','Al Jazeera':'AJ','taz':'taz','Mediapart':'M','L’Humanité':'H','Le Monde diplomatique':'LMD','Apache':'A','Médor':'MÉ','nd':'nd','Middle East Eye':'MEE','+972 Magazine':'+972','Africa Is a Country':'AIC','Brasil de Fato':'BdF','Gothamist':'GTH','THE CITY':'CITY','Hell Gate':'HG','City Limits':'CL','Streetsblog NYC':'SB','Artforum':'AF','Artnet News':'AN','The Art Newspaper':'TAN','Hyperallergic':'HA','ARTnews':'ART','Equator':'EQ','Tablet':'TAB'};
 function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -613,4 +613,35 @@ function composeFrontPage(){
  }
  flush();
 }
+</script><script>
+(function(){
+const canvas=document.getElementById('news-loader-canvas');if(!canvas)return;
+const ctx=canvas.getContext('2d');const icon=new Image();icon.src='assets/app-icon.png';
+icon.onload=function(){
+const off=document.createElement('canvas');off.width=180;off.height=180;
+const c=off.getContext('2d',{willReadFrequently:true});c.drawImage(icon,0,0,180,180);
+const im=c.getImageData(0,0,180,180),d=im.data;
+for(let i=0;i<d.length;i+=4){
+ const R=d[i],G=d[i+1],B=d[i+2];
+ // Remove the icon's blue field, retaining the cream newspaper, black outlines and hands.
+ const blue=B>R*1.28&&B>G*1.10&&R<95&&G<145;
+ if(blue)d[i+3]=0;
+}
+c.putImageData(im,0,0);
+let frame=0;
+function draw(){
+ctx.clearRect(0,0,360,360);ctx.save();ctx.scale(2,2);ctx.drawImage(off,0,0);
+const t=performance.now()/1000;const phase=(t%1.5)/1.5;
+const x=phase<.18?-5:phase<.36?5:phase<.53?-4:phase<.70?5:phase<.86?-5:3;
+const blink=(t%6.4)>.0&&(t%6.4)<.09;
+for(const [cx,cy,rx,ry] of [[78,44,8.5,13],[98,43,9,13]]){
+ctx.fillStyle='#fff8e8';ctx.strokeStyle='#151515';ctx.lineWidth=1.7;
+ctx.beginPath();ctx.ellipse(cx,cy,rx,blink?1.1:ry,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+if(!blink){ctx.fillStyle='#171717';ctx.beginPath();ctx.ellipse(cx+x*.55,cy+3,3.3,6.2,0,0,Math.PI*2);ctx.fill();}
+}
+ctx.restore();frame=requestAnimationFrame(draw);
+}
+draw();
+};
+})();
 </script></body></html>
