@@ -270,8 +270,8 @@ body>header.is-scrolled #filter-tray{margin-top:7px}
 
 #news-loader{position:fixed;inset:0;z-index:900;background:#004170;display:grid;place-items:center;transition:opacity .28s ease;pointer-events:auto}
 #news-loader.is-hidden{opacity:0;pointer-events:none}
-#news-loader .loader-icon{width:min(58vw,240px);aspect-ratio:1;position:relative}
-#news-loader img{display:block;width:100%;height:100%;-webkit-mask-image:radial-gradient(circle,black 57%,transparent 72%);mask-image:radial-gradient(circle,black 57%,transparent 72%)}
+#news-loader .loader-icon{width:min(58vw,240px);aspect-ratio:1;position:relative;background:#004170}
+#news-loader img{display:block;width:100%;height:100%;border-radius:20%}
 #news-loader svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 #news-loader .pupils{transform-origin:center}
 #news-loader .blink{animation:news-eye-blink 7.3s infinite;transform-box:fill-box;transform-origin:center}
