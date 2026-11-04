@@ -625,9 +625,9 @@ for(let i=0;i<d.length;i+=4){
  const R=d[i],G=d[i+1],B=d[i+2];
  // Remove the icon's blue field, retaining the cream newspaper, black outlines and hands.
  const blue=B>R*1.28&&B>G*1.10&&R<95&&G<145;
- if(blue)d[i+3]=0;
+ const corner=(Math.min(i/4%180,179-i/4%180)<24 && (Math.floor(i/4/180)<24||Math.floor(i/4/180)>155));if(blue || (corner&&R>170&&G>170&&B>170))d[i+3]=0;
 }
-c.putImageData(im,0,0);
+c.putImageData(im,0,0);c.clearRect(66,28,44,34);
 let frame=0;
 function draw(){
 ctx.clearRect(0,0,360,360);ctx.save();ctx.scale(2,2);ctx.drawImage(off,0,0);
@@ -637,7 +637,7 @@ const blink=(t%6.4)>.0&&(t%6.4)<.09;
 for(const [cx,cy,rx,ry] of [[78,44,8.5,13],[98,43,9,13]]){
 ctx.fillStyle='#fff8e8';ctx.strokeStyle='#151515';ctx.lineWidth=1.7;
 ctx.beginPath();ctx.ellipse(cx,cy,rx,blink?1.1:ry,0,0,Math.PI*2);ctx.fill();ctx.stroke();
-if(!blink){ctx.fillStyle='#171717';ctx.beginPath();ctx.ellipse(cx+x*.8,cy+3,3.3,6.2,0,0,Math.PI*2);ctx.fill();}
+if(!blink){ctx.fillStyle='#171717';ctx.beginPath();ctx.ellipse(Math.max(cx-rx+4,Math.min(cx+rx-4,cx+x*.8)),cy+3,3.3,6.2,0,0,Math.PI*2);ctx.fill();}
 }
 ctx.restore();
 }
